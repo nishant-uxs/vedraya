@@ -1,0 +1,29 @@
+.glass-panel {
+  position: relative;
+  background: linear-gradient(180deg, rgba(20, 27, 43, 0.92), rgba(15, 21, 34, 0.88));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.glass-panel--interactive {
+  transition:
+    border-color var(--dur-med) var(--ease-soft),
+    transform var(--dur-med) var(--ease-out),
+    box-shadow var(--dur-med) var(--ease-soft);
+}
+
+.glass-panel--interactive:hover {
+  border-color: var(--border-accent);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(0, 229, 255, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-panel--interactive:hover {
+    transform: none;
+  }
+}

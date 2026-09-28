@@ -32,8 +32,8 @@ export function TrialLifecycle() {
           scrollTrigger: {
             trigger: section,
             start: "top top",
-            end: "+=220%",
-            scrub: 0.65,
+            end: "+=140%",
+            scrub: 0.85,
             pin: true,
             anticipatePin: 1,
             onUpdate: (self) => {

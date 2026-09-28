@@ -33,8 +33,8 @@ export function FragmentedData() {
         scrollTrigger: {
           trigger: section,
           start: "top top",
-          end: "+=180%",
-          scrub: 0.7,
+          end: "+=120%",
+          scrub: 0.85,
           pin: true,
           anticipatePin: 1,
         },

@@ -28,8 +28,8 @@ export function CommandCenter() {
           scrollTrigger: {
             trigger: section,
             start: "top top",
-            end: "+=280%",
-            scrub: 0.7,
+            end: "+=140%",
+            scrub: 0.9,
             pin: true,
             anticipatePin: 1,
             onUpdate: (self) => {

@@ -32,8 +32,8 @@ export function MagneticButton({
     const rect = ref.current.getBoundingClientRect();
     const dx = e.clientX - (rect.left + rect.width / 2);
     const dy = e.clientY - (rect.top + rect.height / 2);
-    x.set(dx * 0.28);
-    y.set(dy * 0.28);
+    x.set(dx * 0.12);
+    y.set(dy * 0.12);
   };
 
   const onLeave = () => {

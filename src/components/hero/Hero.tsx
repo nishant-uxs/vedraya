@@ -65,7 +65,7 @@ export function Hero() {
         >
           <p className="hero__status">
             <span className="hero__status-dot" aria-hidden />
-            Clinical Research Intelligence
+            Clinical research intelligence
           </p>
 
           <h1 className="display hero__title">

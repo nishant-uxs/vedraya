@@ -3,10 +3,10 @@
   grid-template-columns: 48px 1fr;
   min-height: 520px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, #121218, #0a0a0e);
   overflow: hidden;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   transform-origin: center center;
   will-change: transform;
 }
@@ -17,8 +17,8 @@
   align-items: center;
   gap: 8px;
   padding: 12px 0;
-  border-right: 1px solid var(--border-subtle);
-  background: var(--bg-subtle);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: #08080c;
 }
 
 .dash__rail-item {
@@ -105,8 +105,8 @@
   padding: 12px;
   display: grid;
   gap: 6px;
-  background: var(--bg-subtle);
-  border-color: var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
   box-shadow: none;
 }
 

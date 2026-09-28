@@ -1,47 +1,47 @@
 :root {
-  /* Surfaces — light clinical */
-  --bg-deep: #ffffff;
-  --bg-navy: #f7f8fa;
-  --bg-panel: #ffffff;
-  --bg-elevated: #f2f4f7;
-  --bg-hover: #eef1f5;
-  --bg-canvas: #ffffff;
-  --bg-subtle: #f7f8fa;
+  /* Surfaces — Vision Pro cinematic black */
+  --bg-deep: #000000;
+  --bg-navy: #050508;
+  --bg-panel: rgba(18, 18, 22, 0.72);
+  --bg-elevated: rgba(28, 28, 34, 0.85);
+  --bg-hover: rgba(40, 40, 48, 0.9);
+  --bg-canvas: #000000;
+  --bg-subtle: #08080c;
 
-  /* Text */
-  --text-primary: #111318;
-  --text-secondary: #5f6673;
-  --text-muted: #8a919d;
-  --text-inverse: #ffffff;
+  /* Text — Apple-soft whites */
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-muted: #6e6e73;
+  --text-inverse: #000000;
 
-  /* Accents — restrained, semantic use only */
-  --accent-cyan: #0b8fbf;
-  --accent-cyan-bright: #0891b2;
-  --accent-cyan-dim: rgba(11, 143, 191, 0.08);
-  --accent-cyan-glow: rgba(11, 143, 191, 0.12);
-  --accent-violet: #6366f1;
-  --accent-violet-dim: rgba(99, 102, 241, 0.08);
+  /* Accents — ethereal, restrained */
+  --accent-cyan: #5ac8fa;
+  --accent-cyan-bright: #00e5ff;
+  --accent-cyan-dim: rgba(90, 200, 250, 0.12);
+  --accent-cyan-glow: rgba(90, 200, 250, 0.28);
+  --accent-violet: #7c6bff;
+  --accent-violet-dim: rgba(124, 107, 255, 0.16);
 
-  /* Status — semantic only */
-  --status-ok: #16a34a;
-  --status-ok-dim: rgba(22, 163, 74, 0.1);
-  --status-warn: #d97706;
-  --status-warn-dim: rgba(217, 119, 6, 0.1);
-  --status-crit: #dc2626;
-  --status-crit-dim: rgba(220, 38, 38, 0.1);
+  /* Status */
+  --status-ok: #30d158;
+  --status-ok-dim: rgba(48, 209, 88, 0.14);
+  --status-warn: #ff9f0a;
+  --status-warn-dim: rgba(255, 159, 10, 0.14);
+  --status-crit: #ff453a;
+  --status-crit-dim: rgba(255, 69, 58, 0.14);
 
   /* Borders */
-  --border-subtle: #e5e7eb;
-  --border-medium: #d1d5db;
-  --border-accent: rgba(11, 143, 191, 0.35);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.14);
+  --border-accent: rgba(90, 200, 250, 0.35);
 
-  /* Shadows — soft, low opacity */
-  --shadow-xs: 0 1px 2px rgba(17, 19, 24, 0.04);
-  --shadow-sm: 0 4px 16px rgba(17, 19, 24, 0.05);
-  --shadow-md: 0 12px 40px rgba(17, 19, 24, 0.07);
-  --shadow-lg: 0 24px 64px rgba(17, 19, 24, 0.08);
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 20px 60px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 32px 80px rgba(0, 0, 0, 0.65);
 
-  /* Radius system */
+  /* Radius */
   --radius-xl: 24px;
   --radius-lg: 20px;
   --radius-md: 16px;
@@ -49,7 +49,7 @@
   --radius-xs: 10px;
   --radius-pill: 999px;
 
-  /* Spacing (4/8) */
+  /* Spacing */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -67,7 +67,7 @@
   --font-sans: "Geist", "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: "Geist Mono", "IBM Plex Mono", ui-monospace, monospace;
 
-  --text-display: clamp(2.75rem, 6.5vw, 5.75rem);
+  --text-display: clamp(2.75rem, 6.5vw, 5.5rem);
   --text-h1: clamp(2.25rem, 4vw, 3.75rem);
   --text-h2: clamp(1.75rem, 3vw, 2.75rem);
   --text-h3: clamp(1.25rem, 2vw, 1.75rem);
@@ -75,12 +75,12 @@
   --text-ui: 0.875rem;
   --text-micro: 0.6875rem;
 
-  --leading-tight: 1;
+  --leading-tight: 1.02;
   --leading-snug: 1.2;
-  --leading-body: 1.6;
+  --leading-body: 1.55;
 
   --tracking-tight: -0.035em;
-  --tracking-wide: 0.06em;
+  --tracking-wide: 0.08em;
 
   /* Motion */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -90,8 +90,8 @@
   --dur-slow: 640ms;
 
   /* Layout */
-  --nav-h: 68px;
-  --max-w: 1200px;
-  --section-pad-y: clamp(5rem, 12vh, 10rem);
-  --section-pad-x: clamp(1.5rem, 5vw, 3.5rem);
+  --nav-h: 52px;
+  --max-w: 1120px;
+  --section-pad-y: clamp(5rem, 12vh, 9rem);
+  --section-pad-x: clamp(1.5rem, 5vw, 3rem);
 }

@@ -3,10 +3,10 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 48px;
-  padding: 12px 24px;
+  min-height: 44px;
+  padding: 12px 22px;
   border-radius: var(--radius-pill);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: 0.01em;
   transition:
@@ -31,26 +31,27 @@
   transform: translateY(-1px);
 }
 
+/* Vision Pro style: soft white pill, not neon */
 .mag-btn--primary {
-  background: var(--text-primary);
-  color: var(--text-inverse);
+  background: #f5f5f7;
+  color: #000;
   border: 1px solid transparent;
-  box-shadow: var(--shadow-xs);
+  box-shadow: 0 0 24px rgba(90, 200, 250, 0.12);
 }
 
 .mag-btn--primary:hover {
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 0 32px rgba(90, 200, 250, 0.2);
 }
 
 .mag-btn--secondary {
   background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-medium);
+  color: #f5f5f7;
+  border: 1px solid rgba(255, 255, 255, 0.22);
 }
 
 .mag-btn--secondary:hover {
-  border-color: var(--text-secondary);
-  background: var(--bg-subtle);
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .mag-btn--ghost {
@@ -62,7 +63,7 @@
 }
 
 .mag-btn--ghost:hover {
-  color: var(--text-primary);
+  color: #f5f5f7;
 }
 
 @media (prefers-reduced-motion: reduce) {

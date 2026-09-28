@@ -1,7 +1,7 @@
 .final {
   padding-block: clamp(6rem, 16vh, 11rem);
-  border-top: 1px solid var(--border-subtle);
-  background: var(--bg-canvas);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: #000;
 }
 
 .final__inner {

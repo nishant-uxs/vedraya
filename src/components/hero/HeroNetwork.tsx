@@ -100,7 +100,7 @@ export function HeroNetwork({ progress = 0 }: Props) {
               y2={y}
               style={{
                 opacity: lineBoost,
-                stroke: converge > 0.35 ? "#0b8fbf" : "#c5cad3",
+                stroke: converge > 0.35 ? "#5ac8fa" : "rgba(90, 200, 250, 0.35)",
               }}
             />
           );

@@ -49,8 +49,11 @@ export function DashboardPreview({ focus = "overview", interactive = true }: Pro
       <div className="dash__main">
         <header className="dash__header">
           <div>
-            <p className="mono dash__eyebrow">Command Center</p>
+            <p className="mono dash__eyebrow">Command Center · Node 01</p>
             <h3 className="dash__title">Research Operations Overview</h3>
+            <p className="mono dash__telemetry">
+              LATENCY 14ms · FEDERATED 148 · AUDIT IMMUTABLE
+            </p>
           </div>
           <div className="dash__filters" role="group" aria-label="Study filters">
             <button

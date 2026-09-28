@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Generated / local assets
+stitch-assets
+.playwright-mcp
+vedraya-*.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

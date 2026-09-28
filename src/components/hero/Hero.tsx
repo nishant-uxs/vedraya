@@ -22,8 +22,8 @@ export function Hero() {
     const st = ScrollTrigger.create({
       trigger: section,
       start: "top top",
-      end: "+=160%",
-      scrub: 0.7,
+      end: "+=180%",
+      scrub: 0.75,
       pin: true,
       anticipatePin: 1,
       onUpdate: (self) => setProgress(self.progress),
@@ -34,33 +34,40 @@ export function Hero() {
     };
   }, []);
 
-  // Phase A: copy + network converge (0–0.55)
-  // Phase B: network compresses into dashboard (0.55–1)
-  const converge = Math.min(1, progress / 0.55);
-  const morph = Math.max(0, (progress - 0.55) / 0.45);
-  const textOpacity = 1 - Math.min(1, progress * 1.5);
-  const textY = progress * -48;
-  const networkScale = 1 - morph * 0.35;
+  // Phase A: copy rises, network becomes hero (0–0.5)
+  // Phase B: network → command center (0.5–1)
+  const converge = Math.min(1, progress / 0.5);
+  const morph = Math.max(0, (progress - 0.5) / 0.5);
+  const textOpacity = 1 - Math.min(1, progress * 1.35);
+  const textY = progress * -56;
+  const networkScale = 0.92 + converge * 0.12 - morph * 0.28;
   const networkOpacity = 1 - morph;
-  const dashOpacity = Math.min(1, morph * 1.35);
-  const dashScale = 0.72 + morph * 0.28;
+  const networkY = morph * -24;
+  const dashOpacity = Math.min(1, morph * 1.4);
+  const dashScale = 0.78 + morph * 0.22;
 
   return (
     <section ref={sectionRef} id="top" className="hero" aria-label="VEDRAYA hero">
+      <div className="hero__atmosphere" aria-hidden />
       <div className="grid-overlay" />
+      <p className="hero__watermark" aria-hidden>
+        VEDRAYA
+      </p>
+
       <div className="hero__inner container">
         <div
           className="hero__copy"
           style={{
             opacity: textOpacity,
             transform: `translate3d(0, ${textY}px, 0)`,
-            pointerEvents: textOpacity < 0.15 ? "none" : "auto",
+            pointerEvents: textOpacity < 0.12 ? "none" : "auto",
           }}
         >
           <p className="hero__status">
             <span className="hero__status-dot" aria-hidden />
-            System status · Nominal
+            Clinical Research Intelligence
           </p>
+
           <h1 className="display hero__title">
             Clinical research,
             <br />
@@ -68,10 +75,12 @@ export function Hero() {
             <br />
             as one system.
           </h1>
+
           <p className="body hero__support">
             A real-time clinical research intelligence platform connecting trials, safety,
             compliance, sites and research data into one auditable system.
           </p>
+
           <div className="hero__cta">
             <MagneticButton href="#command-center">Enter Command Center</MagneticButton>
             <MagneticButton href="#platform" variant="secondary">
@@ -85,7 +94,7 @@ export function Hero() {
             className="hero__network-wrap"
             style={{
               opacity: networkOpacity,
-              transform: `scale(${networkScale})`,
+              transform: `translate3d(0, ${networkY}px, 0) scale(${networkScale})`,
             }}
           >
             <HeroNetwork progress={converge} />
@@ -107,9 +116,9 @@ export function Hero() {
 
       <p
         className="hero__scroll-hint mono"
-        style={{ opacity: Math.max(0, 1 - progress * 2.2) }}
+        style={{ opacity: Math.max(0, 1 - progress * 2) }}
       >
-        Scroll — network becomes system
+        Scroll
       </p>
     </section>
   );

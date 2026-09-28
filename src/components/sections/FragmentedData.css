@@ -16,6 +16,9 @@
   display: grid;
   gap: var(--space-5);
   max-width: 44rem;
+  margin-inline: auto;
+  text-align: center;
+  justify-items: center;
 }
 
 .frag__second {

@@ -15,6 +15,9 @@
   display: grid;
   gap: var(--space-4);
   max-width: 40rem;
+  margin-inline: auto;
+  text-align: center;
+  justify-items: center;
 }
 
 .cmd__focus {
@@ -26,4 +29,6 @@
 .cmd__shell {
   will-change: transform, opacity;
   transform-origin: center top;
+  max-width: 1100px;
+  margin-inline: auto;
 }

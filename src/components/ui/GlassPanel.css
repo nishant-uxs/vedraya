@@ -1,10 +1,9 @@
 .glass-panel {
   position: relative;
-  background: linear-gradient(180deg, rgba(20, 27, 43, 0.92), rgba(15, 21, 34, 0.88));
+  background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-xs);
 }
 
 .glass-panel--interactive {
@@ -15,11 +14,9 @@
 }
 
 .glass-panel--interactive:hover {
-  border-color: var(--border-accent);
-  transform: translateY(-2px);
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(0, 229, 255, 0.12);
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -59,9 +59,9 @@ export function HeroNetwork({ progress = 0 }: Props) {
     const lines = root.querySelectorAll<SVGLineElement>(".hero-net__line");
     let t = 0;
     const tick = () => {
-      t += 0.02;
+      t += 0.015;
       lines.forEach((line, i) => {
-        const opacity = 0.25 + Math.sin(t + i) * 0.2;
+        const opacity = 0.2 + Math.sin(t + i) * 0.12;
         line.style.opacity = String(opacity);
       });
       pulseRef.current = requestAnimationFrame(tick);
@@ -73,10 +73,10 @@ export function HeroNetwork({ progress = 0 }: Props) {
   }, []);
 
   const converge = Math.min(1, Math.max(0, progress));
-  const scale = 1 + converge * 0.35;
-  const coreScale = 1 + converge * 0.8;
+  const scale = 1 + converge * 0.18;
+  const coreScale = 1 + converge * 0.45;
   const metricsOpacity = 1 - converge * 1.2;
-  const lineBoost = 0.35 + converge * 0.65;
+  const lineBoost = 0.28 + converge * 0.45;
 
   return (
     <div
@@ -98,7 +98,10 @@ export function HeroNetwork({ progress = 0 }: Props) {
               y1="50"
               x2={x}
               y2={y}
-              style={{ opacity: lineBoost }}
+              style={{
+                opacity: lineBoost,
+                stroke: converge > 0.35 ? "#0b8fbf" : "#c5cad3",
+              }}
             />
           );
         })}

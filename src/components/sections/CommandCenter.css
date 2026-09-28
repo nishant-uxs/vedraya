@@ -2,24 +2,25 @@
   min-height: 100vh;
   display: flex;
   align-items: center;
+  background: var(--bg-canvas);
 }
 
 .cmd__inner {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-8);
   width: 100%;
 }
 
 .cmd__intro {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
   max-width: 40rem;
 }
 
 .cmd__focus {
   font-size: var(--text-micro);
   letter-spacing: 0.12em;
-  color: var(--accent-cyan);
+  color: var(--text-muted);
 }
 
 .cmd__shell {

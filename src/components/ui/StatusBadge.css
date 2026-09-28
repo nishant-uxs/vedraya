@@ -6,6 +6,7 @@
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
   font-size: var(--text-micro);
+  font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   border: 1px solid var(--border-subtle);
@@ -14,8 +15,8 @@
 }
 
 .status-badge__dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: currentColor;
 }
@@ -23,19 +24,19 @@
 .status-badge--ok {
   color: var(--status-ok);
   background: var(--status-ok-dim);
-  border-color: rgba(34, 197, 94, 0.3);
+  border-color: rgba(22, 163, 74, 0.2);
 }
 
 .status-badge--warn {
   color: var(--status-warn);
   background: var(--status-warn-dim);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(217, 119, 6, 0.22);
 }
 
 .status-badge--crit {
   color: var(--status-crit);
   background: var(--status-crit-dim);
-  border-color: rgba(239, 68, 68, 0.3);
+  border-color: rgba(220, 38, 38, 0.22);
 }
 
 .status-badge--info {
@@ -45,18 +46,16 @@
 }
 
 .status-badge.is-pulse .status-badge__dot {
-  animation: badge-pulse 1.8s var(--ease-soft) infinite;
+  animation: badge-pulse 2s var(--ease-soft) infinite;
 }
 
 @keyframes badge-pulse {
   0%,
   100% {
     opacity: 1;
-    transform: scale(1);
   }
   50% {
-    opacity: 0.45;
-    transform: scale(0.85);
+    opacity: 0.4;
   }
 }
 

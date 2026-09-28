@@ -1,24 +1,28 @@
+.copilot {
+  background: var(--bg-canvas);
+}
+
 .copilot__inner {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
 
 .copilot__copy {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
   max-width: 40rem;
 }
 
 .copilot__panel {
-  padding: var(--space-5);
+  padding: var(--space-6);
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
 
 .copilot__query {
   display: grid;
-  gap: 10px;
-  padding-bottom: var(--space-4);
+  gap: 12px;
+  padding-bottom: var(--space-5);
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -32,10 +36,11 @@
 
 .copilot__response p:first-child {
   color: var(--text-primary);
+  font-weight: 500;
 }
 
 .copilot__caret {
-  width: 8px;
+  width: 7px;
   height: 1.1em;
   background: var(--accent-cyan);
   animation: caret-blink 1s steps(1) infinite;
@@ -53,9 +58,10 @@
 }
 
 .copilot__chip {
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
   font-size: var(--text-ui);
   color: var(--text-secondary);
   transition:

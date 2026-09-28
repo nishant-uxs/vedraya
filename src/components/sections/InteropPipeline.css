@@ -1,11 +1,15 @@
+.interop {
+  background: var(--bg-canvas);
+}
+
 .interop__inner {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
 
 .interop__copy {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .interop__pipe {
@@ -27,6 +31,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-ui);
   letter-spacing: 0.06em;
+  color: var(--text-primary);
 }
 
 .interop__down {
@@ -35,23 +40,23 @@
 }
 
 .interop__transform {
-  padding: var(--space-5);
+  padding: var(--space-6);
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .interop__steps {
   display: grid;
   gap: 12px;
-  counter-reset: none;
 }
 
 .interop__steps li {
   display: grid;
   gap: 6px;
-  padding: 14px;
+  padding: 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
   opacity: 0.3;
   transform: translateY(8px);
   transition:
@@ -64,7 +69,7 @@
   opacity: 1;
   transform: none;
   border-color: var(--border-accent);
-  background: rgba(0, 229, 255, 0.04);
+  background: var(--accent-cyan-dim);
 }
 
 .interop__steps span {

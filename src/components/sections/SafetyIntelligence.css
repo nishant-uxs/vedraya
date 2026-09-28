@@ -1,11 +1,15 @@
+.safety {
+  background: var(--bg-canvas);
+}
+
 .safety__inner {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
 
 .safety__copy {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
   max-width: 42rem;
 }
 
@@ -31,9 +35,9 @@
 }
 
 .safety__board {
-  padding: var(--space-5);
+  padding: var(--space-6);
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
 
 .safety__workflow {
@@ -56,12 +60,12 @@
 }
 
 .safety__step.is-current {
-  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.35));
+  outline: none;
 }
 
 .safety__panels {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
 
 .safety__bars {
@@ -75,7 +79,7 @@
 
 .safety__bars div {
   border-radius: 8px 8px 4px 4px;
-  background: linear-gradient(180deg, var(--accent-cyan), rgba(0, 229, 255, 0.2));
+  background: linear-gradient(180deg, rgba(11, 143, 191, 0.55), rgba(11, 143, 191, 0.12));
   position: relative;
 }
 

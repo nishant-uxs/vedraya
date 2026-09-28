@@ -3,18 +3,19 @@
   display: flex;
   align-items: center;
   overflow: hidden;
+  background: var(--bg-subtle);
 }
 
 .frag__inner {
   display: grid;
-  gap: var(--space-8);
+  gap: var(--space-10);
   width: 100%;
 }
 
 .frag__copy {
   display: grid;
-  gap: var(--space-4);
-  max-width: 52rem;
+  gap: var(--space-5);
+  max-width: 44rem;
 }
 
 .frag__second {
@@ -33,7 +34,7 @@
   position: absolute;
   width: min(100%, 640px);
   height: auto;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
 .frag__items {
@@ -48,8 +49,9 @@
 .frag__item {
   padding: 12px 16px;
   border-radius: var(--radius-xs);
-  border: 1px solid var(--border-medium);
+  border: 1px solid var(--border-subtle);
   background: var(--bg-panel);
+  box-shadow: var(--shadow-xs);
   font-size: var(--text-micro);
   letter-spacing: 0.08em;
   color: var(--text-secondary);
@@ -64,14 +66,18 @@
   text-align: center;
   gap: var(--space-3);
   opacity: 0;
-  transform: scale(0.92);
+  transform: scale(0.96);
   pointer-events: none;
   z-index: 2;
-  background: radial-gradient(circle at center, rgba(5, 7, 13, 0.72), transparent 65%);
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.92), transparent 70%);
+}
+
+.frag__finale .h2 {
+  color: var(--text-primary);
 }
 
 @media (max-width: 720px) {
   .frag__stage {
-    min-height: 320px;
+    min-height: 300px;
   }
 }

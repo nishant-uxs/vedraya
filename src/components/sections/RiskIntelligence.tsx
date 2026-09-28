@@ -59,6 +59,7 @@ export function RiskIntelligence() {
       id="intelligence"
       className="risk section"
       aria-labelledby="risk-heading"
+      style={{ background: "var(--bg-canvas)" }}
     >
       <div className="container risk__inner">
         <div className="risk__copy">

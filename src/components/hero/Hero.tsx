@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { MagneticButton } from "../ui/MagneticButton";
-import { StatusBadge } from "../ui/StatusBadge";
 import { HeroNetwork } from "./HeroNetwork";
 import { DashboardPreview } from "../dashboard/DashboardPreview";
 import { registerGsap, ScrollTrigger, prefersReducedMotion } from "../../lib/motion";
@@ -58,7 +57,10 @@ export function Hero() {
             pointerEvents: textOpacity < 0.15 ? "none" : "auto",
           }}
         >
-          <StatusBadge label="System status: nominal" status="info" pulse />
+          <p className="hero__status">
+            <span className="hero__status-dot" aria-hidden />
+            System status · Nominal
+          </p>
           <h1 className="display hero__title">
             Clinical research,
             <br />

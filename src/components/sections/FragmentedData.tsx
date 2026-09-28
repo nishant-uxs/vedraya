@@ -105,8 +105,8 @@ export function FragmentedData() {
             />
             <defs>
               <linearGradient id="fragGrad" x1="0" y1="0" x2="400" y2="0">
-                <stop stopColor="#7c6bff" />
-                <stop offset="1" stopColor="#00e5ff" />
+                <stop stopColor="#94a3b8" />
+                <stop offset="1" stopColor="#0b8fbf" />
               </linearGradient>
             </defs>
           </svg>

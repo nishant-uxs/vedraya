@@ -1,19 +1,18 @@
 .final {
-  padding-block: clamp(6rem, 16vh, 10rem);
+  padding-block: clamp(6rem, 16vh, 11rem);
   border-top: 1px solid var(--border-subtle);
-  background:
-    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(0, 229, 255, 0.08), transparent 60%),
-    var(--bg-deep);
+  background: var(--bg-canvas);
 }
 
 .final__inner {
   display: grid;
-  gap: var(--space-7);
+  gap: var(--space-8);
   justify-items: start;
 }
 
 .final__title {
   max-width: 14ch;
+  color: var(--text-primary);
 }
 
 .final__title span {

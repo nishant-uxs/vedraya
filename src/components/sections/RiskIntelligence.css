@@ -1,12 +1,12 @@
 .risk__inner {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-8);
   align-items: start;
 }
 
 .risk__copy {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
   max-width: 40rem;
 }
 
@@ -16,9 +16,10 @@
 }
 
 .risk__card {
-  padding: var(--space-5);
+  padding: var(--space-6);
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-6);
+  background: var(--bg-panel);
 }
 
 .risk__top {
@@ -30,11 +31,11 @@
 
 .risk__score-wrap {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .risk__score {
-  font-size: clamp(4rem, 10vw, 6.5rem);
+  font-size: clamp(4rem, 10vw, 6rem);
   font-weight: 600;
   line-height: 0.9;
   letter-spacing: -0.04em;
@@ -51,11 +52,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: var(--radius-xs);
   border: 1px solid var(--border-subtle);
-  background: rgba(255, 255, 255, 0.02);
-  opacity: 0.25;
+  background: var(--bg-subtle);
+  opacity: 0.28;
   transform: translateX(-8px);
   transition:
     opacity var(--dur-med) var(--ease-soft),
@@ -66,12 +67,13 @@
 .risk__factors li.is-on {
   opacity: 1;
   transform: none;
-  border-color: rgba(239, 68, 68, 0.28);
+  border-color: rgba(220, 38, 38, 0.2);
 }
 
 .risk__factors strong {
   color: var(--status-crit);
   font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
 .risk__why {
@@ -82,7 +84,7 @@
     transform var(--dur-slow) var(--ease-out);
   display: grid;
   gap: var(--space-3);
-  padding-top: var(--space-2);
+  padding-top: var(--space-4);
   border-top: 1px solid var(--border-subtle);
 }
 
@@ -94,6 +96,6 @@
 @media (min-width: 960px) {
   .risk__inner {
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-8);
+    gap: var(--space-10);
   }
 }

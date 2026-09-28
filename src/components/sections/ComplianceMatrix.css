@@ -1,11 +1,15 @@
+.comp {
+  background: var(--bg-subtle);
+}
+
 .comp__inner {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
 
 .comp__copy {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
   max-width: 44rem;
 }
 
@@ -16,7 +20,7 @@
 
 .comp__layout {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .comp__matrix {
@@ -30,7 +34,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
   background: var(--bg-panel);
@@ -38,6 +42,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-ui);
   letter-spacing: 0.04em;
+  color: var(--text-primary);
   transition:
     border-color var(--dur-fast) var(--ease-soft),
     background var(--dur-fast) var(--ease-soft);
@@ -46,11 +51,11 @@
 .comp__row:hover,
 .comp__row.is-active {
   border-color: var(--border-accent);
-  background: rgba(0, 229, 255, 0.05);
+  background: var(--accent-cyan-dim);
 }
 
 .comp__evidence {
-  padding: var(--space-5);
+  padding: var(--space-6);
   display: grid;
   gap: var(--space-3);
   min-height: 240px;
@@ -65,14 +70,17 @@
 .comp__studies li {
   padding: 6px 10px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border-medium);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
   font-family: var(--font-mono);
   font-size: var(--text-micro);
+  color: var(--text-secondary);
 }
 
 .comp__action {
   font-size: var(--text-body);
   color: var(--accent-cyan);
+  font-weight: 500;
 }
 
 @media (min-width: 900px) {

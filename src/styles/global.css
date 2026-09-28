@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap");
 @import "./tokens.css";
 
 *,
@@ -9,7 +9,7 @@
 
 html {
   scroll-behavior: auto;
-  background: var(--bg-deep);
+  background: var(--bg-canvas);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -35,10 +35,8 @@ html.lenis body {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 229, 255, 0.08), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(124, 107, 255, 0.05), transparent 50%),
-    var(--bg-deep);
+  background: var(--bg-canvas);
+  color: var(--text-primary);
   overflow-x: hidden;
 }
 
@@ -119,15 +117,20 @@ p {
   padding-block: var(--section-pad-y);
 }
 
+.section--subtle {
+  background: var(--bg-subtle);
+}
+
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   font-family: var(--font-mono);
   font-size: var(--text-micro);
+  font-weight: 500;
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--accent-cyan);
+  color: var(--text-muted);
 }
 
 .display {
@@ -143,6 +146,7 @@ p {
   font-weight: 500;
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
 }
 
 .h2 {
@@ -150,18 +154,22 @@ p {
   font-weight: 500;
   line-height: var(--leading-snug);
   letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
 }
 
 .h3 {
   font-size: var(--text-h3);
   font-weight: 500;
   line-height: var(--leading-snug);
+  color: var(--text-primary);
 }
 
 .body {
   font-size: var(--text-body);
+  font-weight: 400;
+  line-height: var(--leading-body);
   color: var(--text-secondary);
-  max-width: 42rem;
+  max-width: 38rem;
 }
 
 .ui-label {
@@ -178,11 +186,11 @@ p {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(242, 245, 250, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(242, 245, 250, 0.03) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
-  opacity: 0.5;
+    linear-gradient(rgba(17, 19, 24, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 19, 24, 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 78%);
+  opacity: 0.45;
 }
 
 @media (prefers-reduced-motion: reduce) {

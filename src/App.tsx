@@ -1,5 +1,6 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useLenis } from "./lib/useLenis";
+import { registerGsap, ScrollTrigger } from "./lib/motion";
 import { Navbar } from "./components/nav/Navbar";
 import { Hero } from "./components/hero/Hero";
 
@@ -43,6 +44,30 @@ function SectionFallback() {
   return <div className="section" aria-hidden style={{ minHeight: "40vh" }} />;
 }
 
+function LazySections() {
+  useEffect(() => {
+    registerGsap();
+    const id = window.requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => window.cancelAnimationFrame(id);
+  }, []);
+
+  return (
+    <>
+      <FragmentedData />
+      <CommandCenter />
+      <RiskIntelligence />
+      <TrialLifecycle />
+      <SafetyIntelligence />
+      <ComplianceMatrix />
+      <InteropPipeline />
+      <AuditTimeline />
+      <CopilotPanel />
+      <RoleSwitcher />
+      <FinalCTA />
+    </>
+  );
+}
+
 export default function App() {
   useLenis();
 
@@ -55,17 +80,7 @@ export default function App() {
       <main id="main">
         <Hero />
         <Suspense fallback={<SectionFallback />}>
-          <FragmentedData />
-          <CommandCenter />
-          <RiskIntelligence />
-          <TrialLifecycle />
-          <SafetyIntelligence />
-          <ComplianceMatrix />
-          <InteropPipeline />
-          <AuditTimeline />
-          <CopilotPanel />
-          <RoleSwitcher />
-          <FinalCTA />
+          <LazySections />
         </Suspense>
       </main>
     </>

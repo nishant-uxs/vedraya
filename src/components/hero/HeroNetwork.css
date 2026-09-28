@@ -1,9 +1,15 @@
 .hero-net {
   position: relative;
-  width: min(100%, 560px);
+  width: min(100%, 520px);
   aspect-ratio: 1;
   margin-inline: auto;
   isolation: isolate;
+}
+
+@media (min-width: 880px) {
+  .hero-net {
+    width: min(100%, 480px);
+  }
 }
 
 .hero-net__glow {

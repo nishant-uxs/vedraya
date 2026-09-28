@@ -1,0 +1,98 @@
+.safety__inner {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.safety__copy {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 42rem;
+}
+
+.safety__hierarchy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-ui);
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.safety__hier-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.safety__arrow {
+  color: var(--accent-cyan);
+}
+
+.safety__board {
+  padding: var(--space-5);
+  display: grid;
+  gap: var(--space-5);
+}
+
+.safety__workflow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.safety__step {
+  opacity: 0.35;
+  transform: translateY(6px);
+  transition:
+    opacity var(--dur-med) var(--ease-soft),
+    transform var(--dur-med) var(--ease-out);
+}
+
+.safety__step.is-on {
+  opacity: 1;
+  transform: none;
+}
+
+.safety__step.is-current {
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.35));
+}
+
+.safety__panels {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.safety__bars {
+  margin-top: 12px;
+  height: 120px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: end;
+  gap: 10px;
+}
+
+.safety__bars div {
+  border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(180deg, var(--accent-cyan), rgba(0, 229, 255, 0.2));
+  position: relative;
+}
+
+.safety__bars div::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+@media (min-width: 900px) {
+  .safety__panels {
+    grid-template-columns: 1fr 1.2fr;
+    align-items: end;
+  }
+}

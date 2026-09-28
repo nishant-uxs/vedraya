@@ -1,0 +1,28 @@
+.cmd {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.cmd__inner {
+  display: grid;
+  gap: var(--space-5);
+  width: 100%;
+}
+
+.cmd__intro {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 40rem;
+}
+
+.cmd__focus {
+  font-size: var(--text-micro);
+  letter-spacing: 0.12em;
+  color: var(--accent-cyan);
+}
+
+.cmd__shell {
+  will-change: transform, opacity;
+  transform-origin: center top;
+}

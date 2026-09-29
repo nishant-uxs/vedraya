@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-29 (later)
+
+- Consent management: versions catalog, CRUD/status/withdraw APIs, Command Center module, KPIs, alerts, audit
+- Regulatory/ethics: ethics committees, submission status machine, CTRI TRACKING (not integration), KPIs, alerts, Command Center module
+- Migration `0001_consent_regulatory`; Vitest consent/regulatory suite (14 tests total)
+
 ## 2026-09-29
 
 - Backend modular monolith: auth, RBAC, studies, sites, investigators, participants, AE, audit, alerts, FHIR prototype, CSV export

@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { DashboardPreview, type DashFocus } from "../dashboard/DashboardPreview";
+import { DashboardPreview, type DashFocus, type DashModule } from "../dashboard/DashboardPreview";
 import { gsap, registerGsap, prefersReducedMotion } from "../../lib/motion";
 import { useAuth } from "../../lib/AuthProvider";
-import { api, type AdverseEvent, type AlertItem, type AuditEvent, type Kpis, type Study } from "../../lib/api";
+import {
+  api,
+  type AdverseEvent,
+  type AlertItem,
+  type AuditEvent,
+  type ConsentKpis,
+  type Kpis,
+  type RegulatoryKpis,
+  type Study,
+} from "../../lib/api";
 import "./CommandCenter.css";
 
 const FOCUS_STEPS: DashFocus[] = [
@@ -51,6 +60,8 @@ export function CommandCenter() {
   const slotRef = useRef<HTMLDivElement>(null);
   const focusRef = useRef<HTMLParagraphElement>(null);
   const [focus, setFocus] = useState<DashFocus>("overview");
+  const [module, setModule] = useState<DashModule>("overview");
+  const [moduleFilter, setModuleFilter] = useState<string | null>(null);
 
   const { user, loading: authLoading, login, logout, error: authError } = useAuth();
   const [email, setEmail] = useState("admin@vedraya.demo");
@@ -60,6 +71,8 @@ export function CommandCenter() {
 
   const [studies, setStudies] = useState<Study[]>([]);
   const [kpis, setKpis] = useState<Kpis | null>(null);
+  const [consentKpis, setConsentKpis] = useState<ConsentKpis | null>(null);
+  const [regulatoryKpis, setRegulatoryKpis] = useState<RegulatoryKpis | null>(null);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [adverseEvents, setAdverseEvents] = useState<AdverseEvent[]>([]);
@@ -70,6 +83,8 @@ export function CommandCenter() {
     if (!user) {
       setStudies([]);
       setKpis(null);
+      setConsentKpis(null);
+      setRegulatoryKpis(null);
       setAlerts([]);
       setAuditEvents([]);
       setAdverseEvents([]);
@@ -78,18 +93,22 @@ export function CommandCenter() {
     setDataLoading(true);
     setDataError(null);
     try {
-      const [s, k, a, aud, ae] = await Promise.all([
+      const [s, k, a, aud, ae, ck, rk] = await Promise.all([
         api.studies(),
         api.kpis(),
         api.alerts(),
-        api.auditEvents(12),
+        api.auditEvents(24),
         api.adverseEvents(),
+        api.consentKpis().catch(() => null),
+        api.regulatoryKpis().catch(() => null),
       ]);
       setStudies(s);
       setKpis(k);
       setAlerts(a);
       setAuditEvents(aud);
       setAdverseEvents(ae);
+      setConsentKpis(ck);
+      setRegulatoryKpis(rk);
     } catch (err) {
       setDataError(err instanceof Error ? err.message : "Failed to load command center data");
     } finally {
@@ -156,15 +175,25 @@ export function CommandCenter() {
     };
   }, []);
 
-  // Refit when live data changes layout height
   useEffect(() => {
     const shell = shellRef.current;
     const slot = slotRef.current;
     const focusEl = focusRef.current;
     if (!shell || !slot || !focusEl) return;
-    const id = window.setTimeout(() => fitShell(shell, slot, focusEl), 50);
+    const id = window.setTimeout(() => fitShell(shell, slot, focusEl), 80);
     return () => window.clearTimeout(id);
-  }, [studies, kpis, alerts, auditEvents, adverseEvents, user, dataLoading]);
+  }, [
+    studies,
+    kpis,
+    alerts,
+    auditEvents,
+    adverseEvents,
+    user,
+    dataLoading,
+    module,
+    consentKpis,
+    regulatoryKpis,
+  ]);
 
   async function onLogin(e: FormEvent) {
     e.preventDefault();
@@ -202,7 +231,11 @@ export function CommandCenter() {
               <button type="button" className="cmd__auth-btn" onClick={() => void logout()}>
                 Sign out
               </button>
-              <button type="button" className="cmd__auth-btn cmd__auth-btn--ghost" onClick={() => void loadOps()}>
+              <button
+                type="button"
+                className="cmd__auth-btn cmd__auth-btn--ghost"
+                onClick={() => void loadOps()}
+              >
                 Refresh
               </button>
             </div>
@@ -247,7 +280,7 @@ export function CommandCenter() {
 
       <div ref={stageRef} id="command-center" className="cmd__stage">
         <p ref={focusRef} className="mono cmd__focus" aria-live="polite">
-          Focus: {focus.toUpperCase()}
+          Focus: {module === "overview" ? focus.toUpperCase() : module.toUpperCase()}
         </p>
         <div ref={slotRef} className="cmd__slot">
           <div ref={shellRef} className="cmd__shell">
@@ -256,12 +289,21 @@ export function CommandCenter() {
               user={user}
               studies={studies}
               kpis={kpis}
+              consentKpis={consentKpis}
+              regulatoryKpis={regulatoryKpis}
               alerts={alerts}
               auditEvents={auditEvents}
               adverseEvents={adverseEvents}
               loading={dataLoading}
               error={dataError}
               source={user ? "live" : "offline"}
+              module={module}
+              moduleFilter={moduleFilter}
+              onModuleChange={(m, f = null) => {
+                setModule(m);
+                setModuleFilter(f);
+              }}
+              onOpsChanged={() => void loadOps()}
             />
           </div>
         </div>

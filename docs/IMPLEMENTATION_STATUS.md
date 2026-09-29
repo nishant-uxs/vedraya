@@ -15,14 +15,14 @@ Honest status for SIH26046 CTMS prototype work. Do not claim more than this tabl
 | Sites + study-site assign | **IMPLEMENTED** | `/api/v1/sites` |
 | Investigators + assign/unassign | **IMPLEMENTED** | `/api/v1/investigators` |
 | Participants + status transitions | **IMPLEMENTED** | `/api/v1/participants` |
-| Alerts computed from DB | **IMPLEMENTED** | `/api/v1/alerts` |
-| Append-only audit trail | **PARTIAL** | write on mutations; no DELETE/PATCH routes; no hash-chain |
+| Alerts computed from DB | **IMPLEMENTED** | includes consent + regulatory alerts |
+| Append-only audit trail | **PARTIAL** | write on mutations; no DELETE/PATCH; no hash-chain |
 | AE/SAE workflow | **IMPLEMENTED** | create + constrained status transitions |
-| Consent records | **PARTIAL** | seeded tables; dedicated routes not fully exposed yet |
-| Regulatory submissions | **PARTIAL** | seeded; dedicated routes not fully exposed yet |
+| Consent records + versions | **IMPLEMENTED** | API + Command Center module + KPIs + audit |
+| Regulatory / ethics / CTRI tracking | **IMPLEMENTED** | ethics committees, submissions, status machine, CTRI TRACKING (not integration) |
 | FHIR-shaped MVP | **PARTIAL / PROTOTYPE** | ResearchStudy/ResearchSubject read endpoints |
 | CSV export + audit | **PARTIAL** | `/api/v1/exports` prototype mapping |
-| Command Center live data | **IMPLEMENTED** | login + studies/kpis/alerts/AE/audit wired |
+| Command Center live data | **IMPLEMENTED** | overview + Consent + Regulatory + Audit modules |
 | Landing / theme / GSAP / Lenis | **PRESERVED** | marketing SPA intact |
 | MedDRA / WHODrug | **NOT IMPLEMENTED** | — |
 | Full CDISC SDTM/ADaM | **NOT IMPLEMENTED** | CSV demo only |
@@ -30,7 +30,7 @@ Honest status for SIH26046 CTMS prototype work. Do not claim more than this tabl
 | DPDP legal compliance | **NOT CLAIMED** | privacy foundations only |
 | ALCOA+ legal compliance | **NOT CLAIMED** | audit log foundations only |
 | Playwright E2E suite | **NOT IMPLEMENTED** | browser QA manual/MCP |
-| Unit/API tests | **PARTIAL** | Vitest auth/RBAC smoke tests |
+| Unit/API tests | **PARTIAL** | Vitest auth/RBAC + consent/regulatory (14 tests) |
 
 ## Demo credentials
 

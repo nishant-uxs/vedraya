@@ -25,40 +25,58 @@ Demo password (development only): `Vedraya!Demo1`
 - `participant:view|manage`
 - `milestone:view|update`
 - `ae:view|create|update|escalate`
-- `consent:view|manage`
+- `consent:view|create|update|withdraw`
 - `regulatory:view|manage`
 - `audit:view`
 - `export:create|view`
 - `fhir:view`
 
-## Role → capabilities (summary)
+## Consent matrix
+
+| Role | view | create | update | withdraw |
+|---|---|---|---|---|
+| administration | ✓ | ✓ | ✓ | ✓ |
+| principal_investigator | ✓ | ✓ | ✓ | ✓ |
+| study_coordinator | ✓ | ✓ | ✓ | ✓ |
+| monitor | ✓ | — | — | — |
+| pharmacovigilance | — | — | — | — |
+| ethics_committee | ✓ | — | — | — |
+| regulator | ✓ | — | — | — |
+
+## Regulatory matrix
+
+| Role | view | manage (ethics committees + submissions + CTRI tracking) |
+|---|---|---|
+| administration | ✓ | ✓ |
+| ethics_committee | ✓ | ✓ |
+| principal_investigator | ✓ | — |
+| study_coordinator | ✓ | — |
+| monitor | ✓ | — |
+| regulator | ✓ | — |
+| pharmacovigilance | — | — |
+
+## Other role summaries
 
 ### Administration
-- Full permission set
-- Can create/update/archive studies, manage sites/investigators/participants, escalate AE, export, view FHIR/audit
+Full permission set.
 
 ### Principal Investigator
-- View/update studies; manage participants/consent; create/update AE; view audit/export
-- **Cannot** create studies, manage sites, escalate SAE without PV role, or archive
+Study view/update; participants; consent create/update/withdraw; AE create/update; audit/export view.
 
 ### Study Coordinator
-- Operational CRUD for sites/investigators/participants/milestones/consent
-- Can create AE; cannot escalate; cannot create studies
+Sites/investigators/participants/milestones/consent writes; AE create; no study create; no regulatory manage.
 
 ### Monitor
-- Read-mostly operational visibility (studies, sites, participants, AE, audit, export view)
-- **No** write mutations
+Read-mostly (including consent/regulatory view).
 
 ### Pharmacovigilance
-- AE view/update/escalate; limited study/participant view; audit view
-- **No** study create
+AE view/update/escalate; limited study/participant view; audit view.
 
 ### Ethics Committee
-- Study view + consent view + regulatory view/manage + audit view
+Consent view + regulatory view/manage + study view + audit view.
 
 ### Regulator
-- Broad read access including FHIR/export view
-- **No** creates/updates/archives/escalations
+Broad read including consent/regulatory/FHIR/export view. **No** writes.
 
 ## Prohibited for all normal users
 
@@ -70,4 +88,4 @@ Demo password (development only): `Vedraya!Demo1`
 
 - Middleware: `server/src/middleware/auth.ts`
 - Seed matrix: `server/src/db/seed.ts` (`ROLE_DEFS`)
-- Integration tests: `server/tests/api.auth.rbac.test.ts`
+- Tests: `server/tests/api.auth.rbac.test.ts`, `server/tests/api.consent.regulatory.test.ts`

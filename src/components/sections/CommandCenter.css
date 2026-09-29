@@ -1,34 +1,160 @@
 .cmd {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  background: #050508;
+  background: var(--bg-navy);
 }
 
-.cmd__inner {
+/* Story copy — scrolls away before the pinned stage */
+.cmd__lead {
   display: grid;
-  gap: var(--space-8);
-  width: 100%;
-}
-
-.cmd__intro {
-  display: grid;
-  gap: var(--space-4);
+  gap: var(--space-3);
   max-width: 40rem;
   margin-inline: auto;
+  padding-block: var(--space-7) var(--space-4);
   text-align: center;
   justify-items: center;
 }
 
+.cmd__auth {
+  width: min(100%, 36rem);
+  margin-top: var(--space-2);
+}
+
+.cmd__auth-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.cmd__auth-status {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.cmd__login {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+.cmd__login label {
+  display: grid;
+  gap: 4px;
+}
+
+.cmd__login select,
+.cmd__login input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.cmd__auth-btn {
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.cmd__auth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cmd__auth-btn--ghost {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.cmd__auth-error {
+  margin: 0;
+  color: var(--danger, #c0392b);
+  font-size: 0.8rem;
+}
+
+.cmd__auth-hint {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+}
+
+/* Pinned viewport: only Focus + Command Center */
+.cmd__stage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 72px var(--section-pad-x) 20px;
+  box-sizing: border-box;
+}
+
 .cmd__focus {
-  font-size: var(--text-micro);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, var(--accent-soft));
+  font-size: 0.75rem;
+  font-weight: 500;
   letter-spacing: 0.12em;
-  color: var(--text-muted);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-xs);
+  flex-shrink: 0;
+}
+
+.cmd__focus::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.cmd__slot {
+  display: flex;
+  justify-content: center;
+  overflow: visible;
+  /* height/width set by fit() to match scaled shell */
 }
 
 .cmd__shell {
-  will-change: transform, opacity;
-  transform-origin: center top;
-  max-width: 1100px;
-  margin-inline: auto;
+  width: min(1080px, calc(100vw - 48px));
+  flex-shrink: 0;
+  transform-origin: top center;
+  will-change: opacity, transform;
+}
+
+@media (max-width: 900px) {
+  .cmd__stage {
+    padding-top: 64px;
+  }
+
+  .cmd__slot {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .cmd__shell {
+    width: 100%;
+    transform: none !important;
+  }
 }

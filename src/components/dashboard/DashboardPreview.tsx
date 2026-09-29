@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GlassPanel } from "../ui/GlassPanel";
 import { StatusBadge } from "../ui/StatusBadge";
 import { MetricTicker } from "../ui/MetricTicker";
+import type { AdverseEvent, AlertItem, AuditEvent, AuthUser, Kpis, Study } from "../../lib/api";
 import "./DashboardPreview.css";
 
 export type DashFocus = "overview" | "study" | "risk" | "safety" | "compliance" | "audit";
@@ -9,50 +10,98 @@ export type DashFocus = "overview" | "study" | "risk" | "safety" | "compliance" 
 type Props = {
   focus?: DashFocus;
   interactive?: boolean;
+  user?: AuthUser | null;
+  studies?: Study[];
+  kpis?: Kpis | null;
+  alerts?: AlertItem[];
+  auditEvents?: AuditEvent[];
+  adverseEvents?: AdverseEvent[];
+  loading?: boolean;
+  error?: string | null;
+  source?: "live" | "offline";
 };
 
-const STUDIES = [
-  { id: "AYU-024", phase: "III", risk: 78, status: "crit" as const, enrolled: "327/500", sites: 12 },
-  { id: "AYU-031", phase: "II", risk: 42, status: "warn" as const, enrolled: "118/200", sites: 8 },
-  { id: "AYU-018", phase: "III", risk: 21, status: "ok" as const, enrolled: "490/500", sites: 15 },
-  { id: "NEU-007", phase: "I", risk: 35, status: "ok" as const, enrolled: "28/40", sites: 4 },
-];
+function riskTone(risk: number): "crit" | "warn" | "ok" {
+  if (risk >= 60) return "crit";
+  if (risk >= 40) return "warn";
+  return "ok";
+}
 
-const ALERTS = [
-  { t: "14:32", text: "AYU-024 — SAE reporting window approaching", level: "crit" as const },
-  { t: "13:08", text: "Site 03 — no recruitment activity 18 days", level: "warn" as const },
-  { t: "11:44", text: "Monitoring visit overdue — AYU-031", level: "warn" as const },
-  { t: "09:15", text: "Data integrity check passed — batch 214", level: "ok" as const },
-];
+function formatTime(iso: string) {
+  try {
+    return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "—";
+  }
+}
 
-export function DashboardPreview({ focus = "overview", interactive = true }: Props) {
+export function DashboardPreview({
+  focus = "overview",
+  interactive = true,
+  user = null,
+  studies: liveStudies = [],
+  kpis = null,
+  alerts = [],
+  auditEvents = [],
+  adverseEvents = [],
+  loading = false,
+  error = null,
+  source = "offline",
+}: Props) {
   const [filter, setFilter] = useState<"all" | "high">("all");
-  const [expanded, setExpanded] = useState<string | null>("AYU-024");
+  const [expanded, setExpanded] = useState<string | null>(null);
 
-  const studies = useMemo(
-    () => (filter === "high" ? STUDIES.filter((s) => s.risk >= 60) : STUDIES),
-    [filter],
-  );
+  useEffect(() => {
+    if (liveStudies[0] && !expanded) setExpanded(liveStudies[0].code);
+  }, [liveStudies, expanded]);
+
+  const studies = useMemo(() => {
+    const rows = liveStudies.map((s) => ({
+      id: s.code,
+      phase: s.phase ?? "—",
+      risk: s.riskScore,
+      status: riskTone(s.riskScore),
+      enrolled: `${s.enrollmentCurrent}/${s.enrollmentTarget}`,
+      sites: "—",
+      title: s.title,
+      dbStatus: s.status,
+      enrollmentCurrent: s.enrollmentCurrent,
+      enrollmentTarget: s.enrollmentTarget,
+    }));
+    return filter === "high" ? rows.filter((s) => s.risk >= 60) : rows;
+  }, [liveStudies, filter]);
+
+  const lead = studies[0];
+  const enrollPct =
+    lead && lead.enrollmentTarget > 0
+      ? Math.min(100, (lead.enrollmentCurrent / lead.enrollmentTarget) * 100)
+      : 0;
+
+  const aeOpen = adverseEvents.filter((a) => a.status !== "closed");
+  const saeCount = adverseEvents.filter((a) => a.isSerious).length;
+  const aeCount = adverseEvents.length;
 
   return (
-    <div className={`dash focus-${focus}`} role="region" aria-label="VEDRAYA command center preview">
+    <div className={`dash focus-${focus}`} role="region" aria-label="VEDRAYA command center">
       <aside className="dash__rail" aria-label="Modules">
-        {["Overview", "Studies", "Sites", "Safety", "Regulatory", "Audit", "Copilot"].map(
-          (item, i) => (
-            <span key={item} className={`dash__rail-item${i === 0 ? " is-active" : ""}`}>
-              {item[0]}
-            </span>
-          ),
-        )}
+        {["Overview", "Studies", "Sites", "Safety", "Regulatory", "Audit"].map((item, i) => (
+          <span key={item} className={`dash__rail-item${i === 0 ? " is-active" : ""}`}>
+            {item[0]}
+          </span>
+        ))}
       </aside>
 
       <div className="dash__main">
         <header className="dash__header">
           <div>
-            <p className="mono dash__eyebrow">Command Center · Node 01</p>
+            <p className="mono dash__eyebrow">
+              Command Center · {source === "live" ? "Live PostgreSQL" : "Session required"}
+            </p>
             <h3 className="dash__title">Research Operations Overview</h3>
             <p className="mono dash__telemetry">
-              LATENCY 14ms · FEDERATED 148 · AUDIT IMMUTABLE
+              {source === "live"
+                ? `SOURCE ${kpis?.source ?? "postgresql"} · ${user?.name ?? "—"} · ${(user?.roles ?? []).join(", ")}`
+                : "Sign in below to load studies, KPIs, safety, and audit from the API"}
             </p>
           </div>
           <div className="dash__filters" role="group" aria-label="Study filters">
@@ -73,29 +122,36 @@ export function DashboardPreview({ focus = "overview", interactive = true }: Pro
           </div>
         </header>
 
+        {error && (
+          <p className="dash__banner dash__banner--error" role="alert">
+            {error}
+          </p>
+        )}
+        {loading && <p className="dash__banner">Loading operational data…</p>}
+
         <div className="dash__kpis">
           <GlassPanel className="dash__kpi" interactive>
             <span className="ui-label">Active studies</span>
             <strong>
-              <MetricTicker value={27} />
+              <MetricTicker value={kpis?.activeStudies ?? 0} />
             </strong>
           </GlassPanel>
           <GlassPanel className="dash__kpi dash__kpi--crit" interactive>
             <span className="ui-label">High risk</span>
             <strong>
-              <MetricTicker value={4} />
+              <MetricTicker value={kpis?.atRiskStudies ?? 0} />
             </strong>
           </GlassPanel>
           <GlassPanel className="dash__kpi dash__kpi--warn" interactive>
             <span className="ui-label">Open alerts</span>
             <strong>
-              <MetricTicker value={12} />
+              <MetricTicker value={alerts.length} />
             </strong>
           </GlassPanel>
           <GlassPanel className="dash__kpi dash__kpi--ok" interactive>
-            <span className="ui-label">Data integrity</span>
+            <span className="ui-label">Total studies</span>
             <strong>
-              <MetricTicker value={98.2} decimals={1} suffix="%" />
+              <MetricTicker value={kpis?.totalStudies ?? 0} />
             </strong>
           </GlassPanel>
         </div>
@@ -103,8 +159,12 @@ export function DashboardPreview({ focus = "overview", interactive = true }: Pro
         <div className="dash__grid">
           <GlassPanel className="dash__panel dash__studies" interactive>
             <div className="dash__panel-head">
-              <h4>Active studies</h4>
-              <StatusBadge label="Live" status="info" pulse />
+              <h4>Studies</h4>
+              <StatusBadge
+                label={source === "live" ? "Live" : "Offline"}
+                status={source === "live" ? "ok" : "warn"}
+                pulse={source === "live"}
+              />
             </div>
             <table>
               <thead>
@@ -113,10 +173,15 @@ export function DashboardPreview({ focus = "overview", interactive = true }: Pro
                   <th>Phase</th>
                   <th>Risk</th>
                   <th>Enrollment</th>
-                  <th>Sites</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
+                {studies.length === 0 && (
+                  <tr>
+                    <td colSpan={5}>{loading ? "Loading…" : "No studies loaded"}</td>
+                  </tr>
+                )}
                 {studies.map((s) => (
                   <tr
                     key={s.id}
@@ -134,13 +199,10 @@ export function DashboardPreview({ focus = "overview", interactive = true }: Pro
                     <td>{s.id}</td>
                     <td>{s.phase}</td>
                     <td>
-                      <StatusBadge
-                        label={`${s.risk}`}
-                        status={s.status}
-                      />
+                      <StatusBadge label={`${s.risk}`} status={s.status} />
                     </td>
                     <td>{s.enrolled}</td>
-                    <td>{s.sites}</td>
+                    <td>{s.dbStatus}</td>
                   </tr>
                 ))}
               </tbody>
@@ -148,8 +210,9 @@ export function DashboardPreview({ focus = "overview", interactive = true }: Pro
             {expanded && (
               <div className="dash__expand">
                 <p>
-                  <strong>{expanded}</strong> — Operational monitoring score elevated. Recruitment
-                  below trajectory. Site inactivity and overdue monitoring contributing.
+                  <strong>{expanded}</strong> —{" "}
+                  {studies.find((s) => s.id === expanded)?.title ?? "Study detail"} · risk{" "}
+                  {studies.find((s) => s.id === expanded)?.risk ?? "—"}.
                 </p>
               </div>
             )}
@@ -158,38 +221,45 @@ export function DashboardPreview({ focus = "overview", interactive = true }: Pro
           <GlassPanel className="dash__panel dash__recruit" interactive>
             <div className="dash__panel-head">
               <h4>Recruitment</h4>
-              <span className="mono ui-label">AYU-024</span>
+              <span className="mono ui-label">{lead?.id ?? "—"}</span>
             </div>
             <div className="dash__bar-wrap">
-              <div className="dash__bar" style={{ width: "65.4%" }} />
+              <div className="dash__bar" style={{ width: `${enrollPct.toFixed(1)}%` }} />
             </div>
             <div className="dash__meta">
-              <span>327 / 500 enrolled</span>
-              <span>65.4%</span>
+              <span>
+                {lead
+                  ? `${lead.enrollmentCurrent} / ${lead.enrollmentTarget} enrolled`
+                  : "No study selected"}
+              </span>
+              <span>{enrollPct.toFixed(1)}%</span>
             </div>
           </GlassPanel>
 
           <GlassPanel className="dash__panel dash__safety" interactive>
             <div className="dash__panel-head">
               <h4>Safety</h4>
-              <StatusBadge label="4 open SAE" status="warn" />
+              <StatusBadge
+                label={`${aeOpen.filter((a) => a.isSerious).length} open SAE`}
+                status={saeCount > 0 ? "warn" : "ok"}
+              />
             </div>
             <ul className="dash__stats">
               <li>
                 <span>AE</span>
-                <strong>148</strong>
+                <strong>{aeCount}</strong>
               </li>
               <li>
                 <span>SAE</span>
-                <strong>12</strong>
+                <strong>{saeCount}</strong>
               </li>
               <li>
-                <span>ADR</span>
-                <strong>6</strong>
+                <span>Open</span>
+                <strong>{aeOpen.length}</strong>
               </li>
               <li>
-                <span>Signals</span>
-                <strong>2</strong>
+                <span>Escalated</span>
+                <strong>{adverseEvents.filter((a) => a.status === "escalated").length}</strong>
               </li>
             </ul>
           </GlassPanel>
@@ -199,10 +269,14 @@ export function DashboardPreview({ focus = "overview", interactive = true }: Pro
               <h4>Alerts</h4>
             </div>
             <ul className="dash__alert-list">
-              {ALERTS.map((a) => (
-                <li key={a.t + a.text}>
-                  <StatusBadge label={a.t} status={a.level} />
-                  <span>{a.text}</span>
+              {alerts.length === 0 && <li className="dash__muted">No computed alerts</li>}
+              {alerts.slice(0, 6).map((a) => (
+                <li key={`${a.type}-${a.entityId}`}>
+                  <StatusBadge
+                    label={a.level.toUpperCase()}
+                    status={a.level === "crit" ? "crit" : a.level === "ok" ? "ok" : "warn"}
+                  />
+                  <span>{a.message}</span>
                 </li>
               ))}
             </ul>
@@ -210,22 +284,28 @@ export function DashboardPreview({ focus = "overview", interactive = true }: Pro
 
           <GlassPanel className="dash__panel dash__quality" interactive>
             <div className="dash__panel-head">
-              <h4>Data quality</h4>
+              <h4>Portfolio</h4>
             </div>
             <div className="dash__quality-score">
-              <strong>98.2%</strong>
-              <span className="ui-label">integrity across federated sources</span>
+              <strong>{kpis?.completedStudies ?? 0}</strong>
+              <span className="ui-label">
+                completed · {kpis?.openHighRisk ?? 0} open high-risk AE · computed{" "}
+                {kpis?.computedAt ? formatTime(kpis.computedAt) : "—"}
+              </span>
             </div>
           </GlassPanel>
 
           <GlassPanel className="dash__panel dash__activity" interactive>
             <div className="dash__panel-head">
-              <h4>Recent activity</h4>
+              <h4>Audit trail</h4>
             </div>
             <ul className="dash__activity-list mono">
-              <li>14:32 Dr. Sharma updated recruitment target</li>
-              <li>14:32 System validated change</li>
-              <li>15:01 Regulatory officer reviewed</li>
+              {auditEvents.length === 0 && <li className="dash__muted">No audit events loaded</li>}
+              {auditEvents.slice(0, 8).map((e) => (
+                <li key={e.id}>
+                  {formatTime(e.occurredAt)} {e.actorName ?? "system"} · {e.action} · {e.entityType}
+                </li>
+              ))}
             </ul>
           </GlassPanel>
         </div>

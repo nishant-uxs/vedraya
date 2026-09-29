@@ -18,7 +18,9 @@ import {
   users,
   auditEvents,
   consents,
+  consentVersions,
   regulatorySubmissions,
+  ethicsCommittees,
 } from "./schema.js";
 
 const PERMS = [
@@ -39,7 +41,9 @@ const PERMS = [
   "ae:update",
   "ae:escalate",
   "consent:view",
-  "consent:manage",
+  "consent:create",
+  "consent:update",
+  "consent:withdraw",
   "regulatory:view",
   "regulatory:manage",
   "audit:view",
@@ -63,7 +67,9 @@ const ROLE_DEFS: Record<string, { name: string; perms: string[] }> = {
       "ae:create",
       "ae:update",
       "consent:view",
-      "consent:manage",
+      "consent:create",
+      "consent:update",
+      "consent:withdraw",
       "regulatory:view",
       "audit:view",
       "export:view",
@@ -85,7 +91,9 @@ const ROLE_DEFS: Record<string, { name: string; perms: string[] }> = {
       "ae:view",
       "ae:create",
       "consent:view",
-      "consent:manage",
+      "consent:create",
+      "consent:update",
+      "consent:withdraw",
       "regulatory:view",
       "audit:view",
       "export:view",
@@ -108,7 +116,13 @@ const ROLE_DEFS: Record<string, { name: string; perms: string[] }> = {
   },
   ethics_committee: {
     name: "Ethics Committee",
-    perms: ["study:view", "consent:view", "regulatory:view", "regulatory:manage", "audit:view"],
+    perms: [
+      "study:view",
+      "consent:view",
+      "regulatory:view",
+      "regulatory:manage",
+      "audit:view",
+    ],
   },
   pharmacovigilance: {
     name: "Pharmacovigilance",
@@ -144,10 +158,12 @@ async function main() {
   // wipe in FK-safe order for idempotent reseed in dev
   await db.delete(auditEvents);
   await db.delete(consents);
+  await db.delete(consentVersions);
   await db.delete(adverseEvents);
   await db.delete(participants);
   await db.delete(studyMilestones);
   await db.delete(regulatorySubmissions);
+  await db.delete(ethicsCommittees);
   await db.delete(studyInvestigators);
   await db.delete(studySites);
   await db.delete(investigators);
@@ -391,15 +407,59 @@ async function main() {
     },
   ]);
 
+  const [cv] = await db
+    .insert(consentVersions)
+    .values({
+      studyId: studyRows[0].id,
+      versionLabel: "v2.1",
+      title: "ICF Ashwagandha metabolic syndrome",
+      effectiveAt: new Date("2025-10-01"),
+    })
+    .returning();
+
+  await db.insert(consentVersions).values({
+    studyId: studyRows[0].id,
+    versionLabel: "v2.0",
+    title: "ICF prior version (historical)",
+    effectiveAt: new Date("2025-06-01"),
+  });
+
   if (partRows[0]) {
     await db.insert(consents).values({
       studyId: studyRows[0].id,
       participantId: partRows[0].id,
       version: "v2.1",
+      versionId: cv.id,
       status: "obtained",
       obtainedAt: new Date(),
+      createdBy: adminId,
     });
   }
+  if (partRows[1]) {
+    await db.insert(consents).values({
+      studyId: studyRows[0].id,
+      participantId: partRows[1].id,
+      version: "v2.1",
+      versionId: cv.id,
+      status: "pending",
+      createdBy: adminId,
+    });
+  }
+
+  const [iec] = await db
+    .insert(ethicsCommittees)
+    .values({
+      code: "IEC-AIIA",
+      name: "AIIA Institutional Ethics Committee",
+      city: "New Delhi",
+    })
+    .returning();
+
+  await db.insert(ethicsCommittees).values({
+    code: "IEC-DEMO-02",
+    name: "Regional Ethics Board (synthetic)",
+    city: "Bengaluru",
+  });
 
   await db.insert(regulatorySubmissions).values([
     {
@@ -407,16 +467,41 @@ async function main() {
       kind: "CTRI",
       referenceNumber: "CTRI/2025/DEMO/0001",
       status: "registered",
+      decision: "registered",
       submittedAt: new Date("2025-11-18"),
       decidedAt: new Date("2025-11-20"),
+      createdBy: adminId,
     },
     {
       studyId: studyRows[0].id,
       kind: "IEC",
+      ethicsCommitteeId: iec.id,
       referenceNumber: "IEC-AIIA-2025-042",
       status: "approved",
+      decision: "approved",
       submittedAt: new Date("2025-10-10"),
       decidedAt: new Date("2025-11-01"),
+      createdBy: adminId,
+    },
+    {
+      studyId: studyRows[1].id,
+      kind: "IEC",
+      ethicsCommitteeId: iec.id,
+      referenceNumber: "IEC-PENDING-031",
+      status: "under_review",
+      submittedAt: new Date("2026-09-01"),
+      dueAt: new Date("2026-09-20"),
+      notes: "Synthetic overdue ethics decision for alert demo",
+      createdBy: adminId,
+    },
+    {
+      studyId: studyRows[1].id,
+      kind: "CTRI",
+      status: "submitted",
+      submittedAt: new Date("2026-09-10"),
+      dueAt: new Date("2026-09-25"),
+      notes: "CTRI TRACKING — pending registration (no external API)",
+      createdBy: adminId,
     },
   ]);
 

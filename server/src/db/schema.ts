@@ -230,6 +230,22 @@ export const adverseEvents = pgTable("adverse_events", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Study-scoped consent form versions (catalog). Historical rows are never deleted. */
+export const consentVersions = pgTable(
+  "consent_versions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    studyId: uuid("study_id")
+      .notNull()
+      .references(() => studies.id, { onDelete: "cascade" }),
+    versionLabel: varchar("version_label", { length: 32 }).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    effectiveAt: timestamp("effective_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("consent_version_uidx").on(t.studyId, t.versionLabel)],
+);
+
 export const consents = pgTable("consents", {
   id: uuid("id").defaultRandom().primaryKey(),
   studyId: uuid("study_id")
@@ -238,25 +254,48 @@ export const consents = pgTable("consents", {
   participantId: uuid("participant_id")
     .notNull()
     .references(() => participants.id, { onDelete: "cascade" }),
+  /** Denormalized label for list views; source of truth is versionId when set. */
   version: varchar("version", { length: 32 }).notNull(),
+  versionId: uuid("version_id").references(() => consentVersions.id),
   status: consentStatusEnum("status").notNull().default("pending"),
   obtainedAt: timestamp("obtained_at", { withTimezone: true }),
   withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
+  createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const ethicsCommittees = pgTable("ethics_committees", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  city: varchar("city", { length: 128 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Ethics / CTRI / other regulatory tracking records.
+ * kind examples: IEC | CTRI | DCGI
+ * status machine enforced in application layer.
+ */
 export const regulatorySubmissions = pgTable("regulatory_submissions", {
   id: uuid("id").defaultRandom().primaryKey(),
   studyId: uuid("study_id")
     .notNull()
     .references(() => studies.id, { onDelete: "cascade" }),
+  ethicsCommitteeId: uuid("ethics_committee_id").references(() => ethicsCommittees.id),
   kind: varchar("kind", { length: 64 }).notNull(),
   referenceNumber: varchar("reference_number", { length: 128 }),
-  status: varchar("status", { length: 64 }).notNull().default("submitted"),
+  status: varchar("status", { length: 64 }).notNull().default("draft"),
+  decision: varchar("decision", { length: 64 }),
   submittedAt: timestamp("submitted_at", { withTimezone: true }),
   decidedAt: timestamp("decided_at", { withTimezone: true }),
+  dueAt: timestamp("due_at", { withTimezone: true }),
   notes: text("notes"),
+  createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 /** Append-only. Application code must never UPDATE/DELETE rows. */

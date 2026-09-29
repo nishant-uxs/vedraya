@@ -15,6 +15,8 @@ import { aeRouter } from "./modules/adverse-events/routes.js";
 import { fhirRouter } from "./modules/interop/fhir.js";
 import { exportsRouter } from "./modules/exports/routes.js";
 import { alertsRouter } from "./modules/alerts/routes.js";
+import { consentsRouter } from "./modules/consents/routes.js";
+import { regulatoryRouter } from "./modules/regulatory/routes.js";
 
 export function createApp() {
   const app = express();
@@ -47,6 +49,8 @@ export function createApp() {
   app.use("/api/v1/investigators", investigatorsRouter);
   app.use("/api/v1/participants", participantsRouter);
   app.use("/api/v1/adverse-events", aeRouter);
+  app.use("/api/v1/consents", consentsRouter);
+  app.use("/api/v1/regulatory", regulatoryRouter);
   app.use("/api/v1/audit-events", auditRouter);
   app.use("/api/v1/alerts", alertsRouter);
   app.use("/api/v1/fhir", fhirRouter);

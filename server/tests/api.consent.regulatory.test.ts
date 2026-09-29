@@ -4,32 +4,32 @@ import { createApp } from "../src/app.js";
 import { db } from "../src/db/client.js";
 import { auditEvents, consents, regulatorySubmissions } from "../src/db/schema.js";
 import { desc, eq } from "drizzle-orm";
+import { loginAs, withCsrf } from "./helpers.js";
 
 const app = createApp();
 
-async function loginAs(email: string) {
-  const agent = request.agent(app);
-  const res = await agent
-    .post("/api/v1/auth/login")
-    .send({ email, password: "Vedraya!Demo1" });
-  expect(res.status).toBe(200);
-  return agent;
-}
-
 describe("consent + regulatory workflows", () => {
   let admin: ReturnType<typeof request.agent>;
+  let adminCsrf: string;
   let regulator: ReturnType<typeof request.agent>;
+  let regulatorCsrf: string;
   let studyId: string;
   let participantId: string;
   let versionId: string;
 
   beforeAll(async () => {
-    admin = await loginAs("admin@vedraya.demo");
-    regulator = await loginAs("regulator@vedraya.demo");
+    const a = await loginAs(app, "admin@vedraya.demo");
+    admin = a.agent;
+    adminCsrf = a.csrf;
+    const r = await loginAs(app, "regulator@vedraya.demo");
+    regulator = r.agent;
+    regulatorCsrf = r.csrf;
 
     const studies = await admin.get("/api/v1/studies");
     expect(studies.status).toBe(200);
-    studyId = studies.body.data[0].id;
+    studyId =
+      studies.body.data.find((s: { code: string }) => s.code === "AYU-024")?.id ??
+      studies.body.data[0].id;
 
     const parts = await admin.get("/api/v1/participants");
     expect(parts.status).toBe(200);
@@ -48,7 +48,7 @@ describe("consent + regulatory workflows", () => {
   });
 
   it("regulator cannot create consent", async () => {
-    const res = await regulator.post("/api/v1/consents").send({
+    const res = await withCsrf(regulator, regulatorCsrf).post("/api/v1/consents").send({
       studyId,
       participantId,
       versionId,
@@ -65,7 +65,7 @@ describe("consent + regulatory workflows", () => {
     );
     expect(freeParticipant).toBeTruthy();
 
-    const create = await admin.post("/api/v1/consents").send({
+    const create = await withCsrf(admin, adminCsrf).post("/api/v1/consents").send({
       studyId,
       participantId: freeParticipant.id,
       versionId,
@@ -78,19 +78,19 @@ describe("consent + regulatory workflows", () => {
     expect(dbRow?.status).toBe("pending");
     expect(dbRow?.versionId).toBe(versionId);
 
-    const obtained = await admin
+    const obtained = await withCsrf(admin, adminCsrf)
       .patch(`/api/v1/consents/${consentId}/status`)
       .send({ status: "obtained", reason: "Signed ICF" });
     expect(obtained.status).toBe(200);
     expect(obtained.body.data.status).toBe("obtained");
 
-    const bad = await admin
+    const bad = await withCsrf(admin, adminCsrf)
       .patch(`/api/v1/consents/${consentId}/status`)
       .send({ status: "pending" });
     expect(bad.status).toBe(400);
     expect(bad.body.error.code).toBe("INVALID_TRANSITION");
 
-    const withdraw = await admin
+    const withdraw = await withCsrf(admin, adminCsrf)
       .post(`/api/v1/consents/${consentId}/withdraw`)
       .send({ reason: "Subject withdrew" });
     expect(withdraw.status).toBe(200);
@@ -109,7 +109,7 @@ describe("consent + regulatory workflows", () => {
   });
 
   it("regulator cannot create regulatory submission", async () => {
-    const res = await regulator.post("/api/v1/regulatory/submissions").send({
+    const res = await withCsrf(regulator, regulatorCsrf).post("/api/v1/regulatory/submissions").send({
       studyId,
       kind: "IEC",
     });
@@ -117,14 +117,14 @@ describe("consent + regulatory workflows", () => {
   });
 
   it("creates ethics committee, submission, transitions, CTRI tracking, and audits", async () => {
-    const ec = await admin.post("/api/v1/regulatory/ethics-committees").send({
+    const ec = await withCsrf(admin, adminCsrf).post("/api/v1/regulatory/ethics-committees").send({
       code: `IEC-T${Date.now().toString(36).slice(-4)}`,
       name: "Test Ethics Committee",
       city: "Pune",
     });
     expect(ec.status).toBe(201);
 
-    const create = await admin.post("/api/v1/regulatory/submissions").send({
+    const create = await withCsrf(admin, adminCsrf).post("/api/v1/regulatory/submissions").send({
       studyId,
       kind: "IEC",
       ethicsCommitteeId: ec.body.data.id,
@@ -134,28 +134,28 @@ describe("consent + regulatory workflows", () => {
     expect(create.body.data.status).toBe("draft");
     const subId = create.body.data.id as string;
 
-    const submit = await admin
+    const submit = await withCsrf(admin, adminCsrf)
       .patch(`/api/v1/regulatory/submissions/${subId}/status`)
       .send({ status: "submitted" });
     expect(submit.status).toBe(200);
 
-    const review = await admin
+    const review = await withCsrf(admin, adminCsrf)
       .patch(`/api/v1/regulatory/submissions/${subId}/status`)
       .send({ status: "under_review" });
     expect(review.status).toBe(200);
 
-    const approve = await admin
+    const approve = await withCsrf(admin, adminCsrf)
       .patch(`/api/v1/regulatory/submissions/${subId}/status`)
       .send({ status: "approved", decision: "approved" });
     expect(approve.status).toBe(200);
     expect(approve.body.data.status).toBe("approved");
 
-    const invalid = await admin
+    const invalid = await withCsrf(admin, adminCsrf)
       .patch(`/api/v1/regulatory/submissions/${subId}/status`)
       .send({ status: "draft" });
     expect(invalid.status).toBe(400);
 
-    const ctri = await admin.post("/api/v1/regulatory/submissions").send({
+    const ctri = await withCsrf(admin, adminCsrf).post("/api/v1/regulatory/submissions").send({
       studyId,
       kind: "CTRI",
       status: "draft",
@@ -163,12 +163,14 @@ describe("consent + regulatory workflows", () => {
     expect(ctri.status).toBe(201);
     const ctriId = ctri.body.data.id as string;
 
-    await admin.patch(`/api/v1/regulatory/submissions/${ctriId}/status`).send({ status: "submitted" });
-    await admin
+    await withCsrf(admin, adminCsrf)
+      .patch(`/api/v1/regulatory/submissions/${ctriId}/status`)
+      .send({ status: "submitted" });
+    await withCsrf(admin, adminCsrf)
       .patch(`/api/v1/regulatory/submissions/${ctriId}/status`)
       .send({ status: "under_review" });
 
-    const track = await admin.patch(`/api/v1/regulatory/submissions/${ctriId}/ctri`).send({
+    const track = await withCsrf(admin, adminCsrf).patch(`/api/v1/regulatory/submissions/${ctriId}/ctri`).send({
       referenceNumber: "CTRI/2026/TEST/0099",
       status: "registered",
       reason: "Demo registration recorded",

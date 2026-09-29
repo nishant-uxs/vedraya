@@ -16,6 +16,7 @@ import {
 import { AppError } from "../../middleware/errors.js";
 import { validateBody } from "../../middleware/validate.js";
 import { rateLimit } from "../../middleware/rateLimit.js";
+import { clearCsrfCookie, setCsrfCookie } from "../../middleware/csrf.js";
 import { writeAudit } from "../audit/service.js";
 
 export const authRouter = Router();
@@ -28,8 +29,9 @@ const loginSchema = z.object({
 authRouter.post(
   "/login",
   rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 30,
+    windowMs: Number(process.env.LOGIN_RATE_WINDOW_MS ?? 15 * 60 * 1000),
+    // Demo/test suites share one process — keep generous for prototype; tighten in production.
+    max: Number(process.env.LOGIN_RATE_MAX ?? (process.env.NODE_ENV === "production" ? 30 : 300)),
     key: (req) => `login:${req.ip}:${String(req.body?.email ?? "").toLowerCase()}`,
   }),
   validateBody(loginSchema),
@@ -44,6 +46,7 @@ authRouter.post(
 
     const session = await createSession(user.id);
     setSessionCookie(res, session.token, session.expiresAt);
+    setCsrfCookie(res);
     const authUser = await loadUserAuth(user.id);
 
     await writeAudit({
@@ -91,6 +94,7 @@ authRouter.post("/logout", async (req, res, next) => {
       });
     }
     clearSessionCookie(res);
+    clearCsrfCookie(res);
     res.json({ data: { ok: true } });
   } catch (err) {
     next(err);

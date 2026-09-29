@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { and, desc, eq, ne, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
 import { studies } from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
 import { AppError } from "../../middleware/errors.js";
+import { assertStudyAccess, resolveStudyScope } from "../../middleware/studyAccess.js";
 import { validateBody } from "../../middleware/validate.js";
 import { writeAudit } from "../audit/service.js";
 
@@ -38,9 +39,17 @@ const TRANSITIONS: Record<string, string[]> = {
   archived: [],
 };
 
-studiesRouter.get("/", authenticate, requirePermission("study:view"), async (_req, res, next) => {
+studiesRouter.get("/", authenticate, requirePermission("study:view"), async (req, res, next) => {
   try {
-    const rows = await db.select().from(studies).orderBy(desc(studies.updatedAt));
+    const scope = await resolveStudyScope(req.user!);
+    const rows =
+      scope === null
+        ? await db.select().from(studies).orderBy(desc(studies.updatedAt))
+        : await db
+            .select()
+            .from(studies)
+            .where(inArray(studies.id, scope.length ? scope : ["00000000-0000-0000-0000-000000000000"]))
+            .orderBy(desc(studies.updatedAt));
     res.json({ data: rows });
   } catch (err) {
     next(err);
@@ -79,6 +88,7 @@ studiesRouter.get("/:id", authenticate, requirePermission("study:view"), async (
   try {
     const [row] = await db.select().from(studies).where(eq(studies.id, req.params.id)).limit(1);
     if (!row) throw new AppError(404, "NOT_FOUND", "Study not found");
+    await assertStudyAccess(req.user!, row.id);
     res.json({ data: row });
   } catch (err) {
     next(err);

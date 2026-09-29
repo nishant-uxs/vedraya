@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
 import { adverseEvents, studies } from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
 import { AppError } from "../../middleware/errors.js";
+import { assertStudyAccess, filterByStudyScope, resolveStudyScope } from "../../middleware/studyAccess.js";
 import { validateBody } from "../../middleware/validate.js";
 import { writeAudit } from "../audit/service.js";
 
@@ -18,6 +19,10 @@ const createSchema = z.object({
   isSerious: z.boolean().optional(),
   severity: z.enum(["mild", "moderate", "severe"]).optional(),
   onsetAt: z.string().datetime().optional(),
+  causality: z.string().max(64).optional(),
+  outcome: z.string().max(64).optional(),
+  actionTaken: z.string().max(64).optional(),
+  seriousnessCriteria: z.string().max(500).optional(),
 });
 
 const statusSchema = z.object({
@@ -31,6 +36,24 @@ const statusSchema = z.object({
   reason: z.string().max(500).optional(),
 });
 
+const classifySchema = z.object({
+  causality: z
+    .enum(["related", "possibly_related", "unlikely", "not_related", "not_assessed"])
+    .optional(),
+  outcome: z
+    .enum(["recovering", "recovered", "not_recovered", "fatal", "unknown"])
+    .optional(),
+  actionTaken: z
+    .enum(["none", "dose_reduced", "drug_interrupted", "drug_withdrawn", "other"])
+    .optional(),
+  severity: z.enum(["mild", "moderate", "severe"]).optional(),
+  isSerious: z.boolean().optional(),
+  seriousnessCriteria: z.string().max(500).optional(),
+  onsetAt: z.string().datetime().nullable().optional(),
+  resolvedAt: z.string().datetime().nullable().optional(),
+  reason: z.string().max(500).optional(),
+});
+
 const AE_TRANSITIONS: Record<string, string[]> = {
   reported: ["investigator_review", "safety_review", "closed"],
   investigator_review: ["safety_review", "escalated", "closed"],
@@ -39,26 +62,62 @@ const AE_TRANSITIONS: Record<string, string[]> = {
   closed: [],
 };
 
-aeRouter.get("/", authenticate, requirePermission("ae:view"), async (_req, res, next) => {
+aeRouter.get("/", authenticate, requirePermission("ae:view"), async (req, res, next) => {
   try {
+    const scope = await resolveStudyScope(req.user!);
     const rows = await db.select().from(adverseEvents).orderBy(desc(adverseEvents.reportedAt));
-    res.json({ data: rows });
+    res.json({ data: filterByStudyScope(rows, scope) });
   } catch (err) {
     next(err);
   }
 });
 
-aeRouter.get("/kpis", authenticate, requirePermission("ae:view"), async (_req, res, next) => {
+aeRouter.get("/kpis", authenticate, requirePermission("ae:view"), async (req, res, next) => {
   try {
-    const [agg] = await db
+    const scope = await resolveStudyScope(req.user!);
+    const base = db
       .select({
         open: sql<number>`count(*) filter (where ${adverseEvents.status} <> 'closed')::int`,
         serious: sql<number>`count(*) filter (where ${adverseEvents.isSerious} = true and ${adverseEvents.status} <> 'closed')::int`,
         escalated: sql<number>`count(*) filter (where ${adverseEvents.status} = 'escalated')::int`,
         pendingReview: sql<number>`count(*) filter (where ${adverseEvents.status} in ('reported','investigator_review','safety_review'))::int`,
+        pendingCoding: sql<number>`count(*) filter (where ${adverseEvents.codingStatus} = 'pending')::int`,
+        coded: sql<number>`count(*) filter (where ${adverseEvents.codingStatus} = 'coded')::int`,
+        total: sql<number>`count(*)::int`,
       })
       .from(adverseEvents);
-    res.json({ data: agg });
+
+    const [agg] =
+      scope === null
+        ? await base
+        : await base.where(inArray(adverseEvents.studyId, scope.length ? scope : ["00000000-0000-0000-0000-000000000000"]));
+
+    res.json({
+      data: {
+        open: agg?.open ?? 0,
+        serious: agg?.serious ?? 0,
+        escalated: agg?.escalated ?? 0,
+        pendingReview: agg?.pendingReview ?? 0,
+        pendingCoding: agg?.pendingCoding ?? 0,
+        coded: agg?.coded ?? 0,
+        total: agg?.total ?? 0,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+aeRouter.get("/:id", authenticate, requirePermission("ae:view"), async (req, res, next) => {
+  try {
+    const [row] = await db
+      .select()
+      .from(adverseEvents)
+      .where(eq(adverseEvents.id, req.params.id))
+      .limit(1);
+    if (!row) throw new AppError(404, "NOT_FOUND", "Adverse event not found");
+    await assertStudyAccess(req.user!, row.studyId);
+    res.json({ data: row });
   } catch (err) {
     next(err);
   }
@@ -72,6 +131,7 @@ aeRouter.post(
   async (req, res, next) => {
     try {
       const body = req.body as z.infer<typeof createSchema>;
+      await assertStudyAccess(req.user!, body.studyId);
       const [study] = await db.select().from(studies).where(eq(studies.id, body.studyId)).limit(1);
       if (!study) throw new AppError(404, "NOT_FOUND", "Study not found");
 
@@ -87,6 +147,11 @@ aeRouter.post(
           isSerious: body.isSerious ?? false,
           severity: body.severity ?? "mild",
           onsetAt: body.onsetAt ? new Date(body.onsetAt) : null,
+          causality: body.causality,
+          outcome: body.outcome,
+          actionTaken: body.actionTaken,
+          seriousnessCriteria: body.seriousnessCriteria,
+          codingStatus: "pending",
           reportedBy: req.user!.id,
           status: "reported",
         })
@@ -108,6 +173,61 @@ aeRouter.post(
 );
 
 aeRouter.patch(
+  "/:id/classify",
+  authenticate,
+  requirePermission("ae:update"),
+  validateBody(classifySchema),
+  async (req, res, next) => {
+    try {
+      const [prev] = await db
+        .select()
+        .from(adverseEvents)
+        .where(eq(adverseEvents.id, req.params.id))
+        .limit(1);
+      if (!prev) throw new AppError(404, "NOT_FOUND", "Adverse event not found");
+      await assertStudyAccess(req.user!, prev.studyId);
+
+      const body = req.body as z.infer<typeof classifySchema>;
+      const [row] = await db
+        .update(adverseEvents)
+        .set({
+          ...(body.causality !== undefined ? { causality: body.causality } : {}),
+          ...(body.outcome !== undefined ? { outcome: body.outcome } : {}),
+          ...(body.actionTaken !== undefined ? { actionTaken: body.actionTaken } : {}),
+          ...(body.severity !== undefined ? { severity: body.severity } : {}),
+          ...(body.isSerious !== undefined ? { isSerious: body.isSerious } : {}),
+          ...(body.seriousnessCriteria !== undefined
+            ? { seriousnessCriteria: body.seriousnessCriteria }
+            : {}),
+          ...(body.onsetAt !== undefined
+            ? { onsetAt: body.onsetAt ? new Date(body.onsetAt) : null }
+            : {}),
+          ...(body.resolvedAt !== undefined
+            ? { resolvedAt: body.resolvedAt ? new Date(body.resolvedAt) : null }
+            : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(adverseEvents.id, req.params.id))
+        .returning();
+
+      await writeAudit({
+        req,
+        action: "AE_CLASSIFY",
+        entityType: "adverse_event",
+        entityId: row.id,
+        previousState: prev,
+        newState: row,
+        reason: body.reason,
+      });
+
+      res.json({ data: row });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+aeRouter.patch(
   "/:id/status",
   authenticate,
   requirePermission("ae:update"),
@@ -120,6 +240,7 @@ aeRouter.patch(
         .where(eq(adverseEvents.id, req.params.id))
         .limit(1);
       if (!prev) throw new AppError(404, "NOT_FOUND", "Adverse event not found");
+      await assertStudyAccess(req.user!, prev.studyId);
 
       const body = req.body as z.infer<typeof statusSchema>;
       if (body.status === "escalated" && !req.user!.permissions.includes("ae:escalate")) {
@@ -140,6 +261,7 @@ aeRouter.patch(
         .set({
           status: body.status,
           isSerious: body.status === "escalated" ? true : prev.isSerious,
+          resolvedAt: body.status === "closed" ? prev.resolvedAt ?? new Date() : prev.resolvedAt,
           updatedAt: new Date(),
         })
         .where(eq(adverseEvents.id, req.params.id))

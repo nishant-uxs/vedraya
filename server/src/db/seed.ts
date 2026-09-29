@@ -23,6 +23,12 @@ import {
   ethicsCommittees,
   dataExports,
   sessions,
+  codingDictionaries,
+  codingTerms,
+  codingResults,
+  concomitantMedications,
+  studyMemberships,
+  rateLimitBuckets,
 } from "./schema.js";
 
 const PERMS = [
@@ -42,6 +48,8 @@ const PERMS = [
   "ae:create",
   "ae:update",
   "ae:escalate",
+  "coding:view",
+  "coding:apply",
   "consent:view",
   "consent:create",
   "consent:update",
@@ -68,6 +76,8 @@ const ROLE_DEFS: Record<string, { name: string; perms: string[] }> = {
       "ae:view",
       "ae:create",
       "ae:update",
+      "coding:view",
+      "coding:apply",
       "consent:view",
       "consent:create",
       "consent:update",
@@ -92,6 +102,7 @@ const ROLE_DEFS: Record<string, { name: string; perms: string[] }> = {
       "milestone:update",
       "ae:view",
       "ae:create",
+      "coding:view",
       "consent:view",
       "consent:create",
       "consent:update",
@@ -128,7 +139,16 @@ const ROLE_DEFS: Record<string, { name: string; perms: string[] }> = {
   },
   pharmacovigilance: {
     name: "Pharmacovigilance",
-    perms: ["study:view", "ae:view", "ae:update", "ae:escalate", "participant:view", "audit:view"],
+    perms: [
+      "study:view",
+      "ae:view",
+      "ae:update",
+      "ae:escalate",
+      "coding:view",
+      "coding:apply",
+      "participant:view",
+      "audit:view",
+    ],
   },
   administration: {
     name: "Administration",
@@ -159,6 +179,10 @@ async function main() {
 
   // wipe in FK-safe order for idempotent reseed in dev
   await db.delete(auditEvents);
+  await db.delete(codingResults);
+  await db.delete(concomitantMedications);
+  await db.delete(codingTerms);
+  await db.delete(codingDictionaries);
   await db.delete(dataExports);
   await db.delete(consents);
   await db.delete(consentVersions);
@@ -169,10 +193,12 @@ async function main() {
   await db.delete(ethicsCommittees);
   await db.delete(studyInvestigators);
   await db.delete(studySites);
+  await db.delete(studyMemberships);
   await db.delete(investigators);
   await db.delete(sites);
   await db.delete(studies);
   await db.delete(sessions);
+  await db.delete(rateLimitBuckets);
   await db.delete(userRoles);
   await db.delete(rolePermissions);
   await db.delete(permissions);
@@ -388,6 +414,11 @@ async function main() {
       severity: "severe",
       status: "escalated",
       description: "Synthetic SAE — hospitalization for evaluation (demo only)",
+      causality: "possibly_related",
+      outcome: "recovering",
+      actionTaken: "drug_interrupted",
+      codingStatus: "pending",
+      seriousnessCriteria: "hospitalization",
       reportedBy: adminId,
     },
     {
@@ -398,6 +429,8 @@ async function main() {
       severity: "mild",
       status: "reported",
       description: "Mild headache after dose (synthetic)",
+      causality: "not_assessed",
+      codingStatus: "pending",
       reportedBy: adminId,
     },
     {
@@ -407,9 +440,119 @@ async function main() {
       severity: "moderate",
       status: "safety_review",
       description: "GI discomfort (synthetic)",
+      causality: "unlikely",
+      outcome: "recovering",
+      codingStatus: "pending",
       reportedBy: adminId,
     },
   ]);
+
+  // MedDRA-compatible DEMO dictionary (synthetic terms — NOT official MedDRA)
+  const [meddra] = await db
+    .insert(codingDictionaries)
+    .values({
+      key: "MEDDRA_DEMO",
+      version: "DEMO-1",
+      kind: "meddra_demo",
+      label: "MedDRA-compatible coding prototype",
+      note: "Synthetic demo terms only. Not official/licensed MedDRA data.",
+    })
+    .returning();
+
+  await db.insert(codingTerms).values([
+    {
+      dictionaryId: meddra.id,
+      code: "10019211",
+      term: "Headache",
+      preferredTerm: "Headache",
+      systemOrganClass: "Nervous system disorders",
+      searchText: "headache head pain cephalalgia",
+    },
+    {
+      dictionaryId: meddra.id,
+      code: "10017999",
+      term: "Gastrointestinal discomfort",
+      preferredTerm: "Gastrointestinal discomfort",
+      systemOrganClass: "Gastrointestinal disorders",
+      searchText: "gi discomfort stomach abdominal",
+    },
+    {
+      dictionaryId: meddra.id,
+      code: "10022086",
+      term: "Hospitalisation",
+      preferredTerm: "Hospitalisation",
+      systemOrganClass: "General disorders and administration site conditions",
+      searchText: "hospitalization hospitalisation admission",
+    },
+    {
+      dictionaryId: meddra.id,
+      code: "10037660",
+      term: "Nausea",
+      preferredTerm: "Nausea",
+      systemOrganClass: "Gastrointestinal disorders",
+      searchText: "nausea queasy",
+    },
+    {
+      dictionaryId: meddra.id,
+      code: "10016256",
+      term: "Fatigue",
+      preferredTerm: "Fatigue",
+      systemOrganClass: "General disorders and administration site conditions",
+      searchText: "fatigue tiredness",
+    },
+  ]);
+
+  // WHODrug-compatible DEMO dictionary
+  const [whodrug] = await db
+    .insert(codingDictionaries)
+    .values({
+      key: "WHODRUG_DEMO",
+      version: "DEMO-1",
+      kind: "whodrug_demo",
+      label: "WHODrug-compatible coding prototype",
+      note: "Synthetic demo terms only. Not official/licensed WHODrug data.",
+    })
+    .returning();
+
+  await db.insert(codingTerms).values([
+    {
+      dictionaryId: whodrug.id,
+      code: "WD-ASHWA-01",
+      term: "Ashwagandha extract",
+      preferredTerm: "Withania somnifera extract",
+      systemOrganClass: null,
+      searchText: "ashwagandha withania somnifera",
+    },
+    {
+      dictionaryId: whodrug.id,
+      code: "WD-PARA-01",
+      term: "Paracetamol",
+      preferredTerm: "Paracetamol",
+      systemOrganClass: null,
+      searchText: "paracetamol acetaminophen",
+    },
+    {
+      dictionaryId: whodrug.id,
+      code: "WD-OMEP-01",
+      term: "Omeprazole",
+      preferredTerm: "Omeprazole",
+      systemOrganClass: null,
+      searchText: "omeprazole ppi",
+    },
+  ]);
+
+  // Monitor is study-scoped to AYU-024 only (IDOR / ACL demo). Other roles remain global.
+  const [monitorUser] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, "monitor@vedraya.demo"))
+    .limit(1);
+  if (monitorUser) {
+    await db.insert(studyMemberships).values({
+      userId: monitorUser.id,
+      studyId: studyRows[0].id,
+    });
+  }
 
   const [cv] = await db
     .insert(consentVersions)

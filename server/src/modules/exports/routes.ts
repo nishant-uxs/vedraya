@@ -5,10 +5,14 @@ import { db } from "../../db/client.js";
 import { dataExports, participants, studies, users } from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
 import { AppError } from "../../middleware/errors.js";
+import { assertStudyAccess } from "../../middleware/studyAccess.js";
 import { validateBody } from "../../middleware/validate.js";
 import { writeAudit } from "../audit/service.js";
+import { sdtmRouter } from "./sdtm.js";
 
 export const exportsRouter = Router();
+
+exportsRouter.use("/sdtm", sdtmRouter);
 
 const bodySchema = z.object({
   studyId: z.string().uuid(),
@@ -52,6 +56,7 @@ exportsRouter.post(
   async (req, res, next) => {
     try {
       const body = req.body as z.infer<typeof bodySchema>;
+      await assertStudyAccess(req.user!, body.studyId);
       const [study] = await db.select().from(studies).where(eq(studies.id, body.studyId)).limit(1);
       if (!study) throw new AppError(404, "NOT_FOUND", "Study not found");
 

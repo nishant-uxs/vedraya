@@ -224,10 +224,104 @@ export const adverseEvents = pgTable("adverse_events", {
   status: aeStatusEnum("status").notNull().default("reported"),
   description: text("description").notNull(),
   onsetAt: timestamp("onset_at", { withTimezone: true }),
+  /** Additive Phase 4 safety fields */
+  causality: varchar("causality", { length: 64 }),
+  outcome: varchar("outcome", { length: 64 }),
+  actionTaken: varchar("action_taken", { length: 64 }),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  codingStatus: varchar("coding_status", { length: 32 }).notNull().default("pending"),
+  seriousnessCriteria: text("seriousness_criteria"),
   reportedAt: timestamp("reported_at", { withTimezone: true }).notNull().defaultNow(),
   reportedBy: uuid("reported_by").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Demo coding dictionaries — NOT official MedDRA/WHODrug licensed content. */
+export const codingDictionaries = pgTable("coding_dictionaries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  key: varchar("key", { length: 64 }).notNull().unique(),
+  version: varchar("version", { length: 32 }).notNull(),
+  kind: varchar("kind", { length: 32 }).notNull(),
+  label: varchar("label", { length: 255 }).notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const codingTerms = pgTable(
+  "coding_terms",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    dictionaryId: uuid("dictionary_id")
+      .notNull()
+      .references(() => codingDictionaries.id, { onDelete: "cascade" }),
+    code: varchar("code", { length: 64 }).notNull(),
+    term: varchar("term", { length: 255 }).notNull(),
+    preferredTerm: varchar("preferred_term", { length: 255 }).notNull(),
+    systemOrganClass: varchar("system_organ_class", { length: 255 }),
+    searchText: text("search_text").notNull(),
+  },
+  (t) => [uniqueIndex("coding_term_uidx").on(t.dictionaryId, t.code)],
+);
+
+export const codingResults = pgTable("coding_results", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  entityType: varchar("entity_type", { length: 64 }).notNull(),
+  entityId: uuid("entity_id").notNull(),
+  dictionaryId: uuid("dictionary_id")
+    .notNull()
+    .references(() => codingDictionaries.id),
+  termId: uuid("term_id")
+    .notNull()
+    .references(() => codingTerms.id),
+  freeText: text("free_text").notNull(),
+  codedBy: uuid("coded_by").references(() => users.id),
+  codedAt: timestamp("coded_at", { withTimezone: true }).notNull().defaultNow(),
+  status: varchar("status", { length: 32 }).notNull().default("coded"),
+});
+
+export const concomitantMedications = pgTable("concomitant_medications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  adverseEventId: uuid("adverse_event_id")
+    .notNull()
+    .references(() => adverseEvents.id, { onDelete: "cascade" }),
+  studyId: uuid("study_id")
+    .notNull()
+    .references(() => studies.id, { onDelete: "cascade" }),
+  freeText: varchar("free_text", { length: 255 }).notNull(),
+  dose: varchar("dose", { length: 128 }),
+  route: varchar("route", { length: 64 }),
+  codingStatus: varchar("coding_status", { length: 32 }).notNull().default("pending"),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Optional study membership. Users with ZERO rows remain globally scoped (backward compatible).
+ * Users with ≥1 row are restricted to those studies. Administration role always bypasses.
+ */
+export const studyMemberships = pgTable(
+  "study_memberships",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    studyId: uuid("study_id")
+      .notNull()
+      .references(() => studies.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("study_membership_uidx").on(t.userId, t.studyId)],
+);
+
+/** Durable rate-limit buckets (DB-backed store; memory store used for local demo by default). */
+export const rateLimitBuckets = pgTable("rate_limit_buckets", {
+  bucketKey: varchar("bucket_key", { length: 255 }).primaryKey(),
+  count: integer("count").notNull().default(0),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
 });
 
 /** Study-scoped consent form versions (catalog). Historical rows are never deleted. */

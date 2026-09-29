@@ -6,23 +6,18 @@ import { createApp } from "../src/app.js";
 import { db } from "../src/db/client.js";
 import { auditEvents } from "../src/db/schema.js";
 import { computeEventHash, verifyAuditChain, writeAudit } from "../src/modules/audit/service.js";
+import { loginAs, withCsrf } from "./helpers.js";
 
 const app = createApp();
 
-async function loginAs(email: string) {
-  const agent = request.agent(app);
-  const res = await agent
-    .post("/api/v1/auth/login")
-    .send({ email, password: "Vedraya!Demo1" });
-  expect(res.status).toBe(200);
-  return agent;
-}
-
 describe("audit hash chain integrity", () => {
   let admin: ReturnType<typeof request.agent>;
+  let adminCsrf: string;
 
   beforeAll(async () => {
-    admin = await loginAs("admin@vedraya.demo");
+    const session = await loginAs(app, "admin@vedraya.demo");
+    admin = session.agent;
+    adminCsrf = session.csrf;
   });
 
   it("writeAudit appends sequenced hashed events", async () => {
@@ -48,20 +43,24 @@ describe("audit hash chain integrity", () => {
   it("rejects audit mutation via API for admin", async () => {
     const list = await admin.get("/api/v1/audit-events?limit=1");
     const id = list.body.data[0].id;
-    const patch = await admin.patch(`/api/v1/audit-events/${id}`).send({ action: "HACKED" });
+    const patch = await withCsrf(admin, adminCsrf)
+      .patch(`/api/v1/audit-events/${id}`)
+      .send({ action: "HACKED" });
     expect(patch.status).toBe(405);
-    const del = await admin.delete(`/api/v1/audit-events/${id}`);
+    const del = await withCsrf(admin, adminCsrf).delete(`/api/v1/audit-events/${id}`);
     expect(del.status).toBe(405);
   });
 
   it("rejects audit mutation via API for non-admin user", async () => {
-    const regulator = await loginAs("regulator@vedraya.demo");
-    const list = await regulator.get("/api/v1/audit-events?limit=1");
+    const regulator = await loginAs(app, "regulator@vedraya.demo");
+    const list = await regulator.agent.get("/api/v1/audit-events?limit=1");
     expect(list.status).toBe(200);
     const id = list.body.data[0]?.id ?? "00000000-0000-0000-0000-000000000001";
-    const patch = await regulator.patch(`/api/v1/audit-events/${id}`).send({ action: "HACKED" });
+    const patch = await withCsrf(regulator.agent, regulator.csrf)
+      .patch(`/api/v1/audit-events/${id}`)
+      .send({ action: "HACKED" });
     expect(patch.status).toBe(405);
-    const del = await regulator.delete(`/api/v1/audit-events/${id}`);
+    const del = await withCsrf(regulator.agent, regulator.csrf).delete(`/api/v1/audit-events/${id}`);
     expect(del.status).toBe(405);
   });
 

@@ -15,6 +15,13 @@
       "when": 1790668000000,
       "tag": "0001_consent_regulatory",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790672000000,
+      "tag": "0002_audit_hash_chain",
+      "breakpoints": true
     }
   ]
 }

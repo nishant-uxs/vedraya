@@ -21,6 +21,8 @@ import {
   consentVersions,
   regulatorySubmissions,
   ethicsCommittees,
+  dataExports,
+  sessions,
 } from "./schema.js";
 
 const PERMS = [
@@ -157,6 +159,7 @@ async function main() {
 
   // wipe in FK-safe order for idempotent reseed in dev
   await db.delete(auditEvents);
+  await db.delete(dataExports);
   await db.delete(consents);
   await db.delete(consentVersions);
   await db.delete(adverseEvents);
@@ -169,6 +172,7 @@ async function main() {
   await db.delete(investigators);
   await db.delete(sites);
   await db.delete(studies);
+  await db.delete(sessions);
   await db.delete(userRoles);
   await db.delete(rolePermissions);
   await db.delete(permissions);
@@ -505,7 +509,8 @@ async function main() {
     },
   ]);
 
-  await db.insert(auditEvents).values({
+  const { writeAudit } = await import("../modules/audit/service.js");
+  await writeAudit({
     actorUserId: adminId,
     action: "SEED",
     entityType: "system",

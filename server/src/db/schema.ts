@@ -298,19 +298,28 @@ export const regulatorySubmissions = pgTable("regulatory_submissions", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-/** Append-only. Application code must never UPDATE/DELETE rows. */
-export const auditEvents = pgTable("audit_events", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
-  actorUserId: uuid("actor_user_id").references(() => users.id),
-  action: varchar("action", { length: 64 }).notNull(),
-  entityType: varchar("entity_type", { length: 64 }).notNull(),
-  entityId: uuid("entity_id"),
-  previousState: jsonb("previous_state"),
-  newState: jsonb("new_state"),
-  reason: text("reason"),
-  requestMeta: jsonb("request_meta"),
-});
+/** Append-only. Application code must never UPDATE/DELETE rows.
+ * Integrity: GLOBAL hash chain via sequence + previousHash + eventHash.
+ */
+export const auditEvents = pgTable(
+  "audit_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    sequence: integer("sequence").notNull(),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
+    actorUserId: uuid("actor_user_id").references(() => users.id),
+    action: varchar("action", { length: 64 }).notNull(),
+    entityType: varchar("entity_type", { length: 64 }).notNull(),
+    entityId: uuid("entity_id"),
+    previousState: jsonb("previous_state"),
+    newState: jsonb("new_state"),
+    reason: text("reason"),
+    requestMeta: jsonb("request_meta"),
+    previousHash: varchar("previous_hash", { length: 64 }).notNull(),
+    eventHash: varchar("event_hash", { length: 64 }).notNull(),
+  },
+  (t) => [uniqueIndex("audit_events_sequence_uidx").on(t.sequence)],
+);
 
 export const dataExports = pgTable("data_exports", {
   id: uuid("id").defaultRandom().primaryKey(),

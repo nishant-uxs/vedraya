@@ -5,7 +5,7 @@ import { db } from "../../db/client.js";
 import { dataExports, participants, studies, users } from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
 import { AppError } from "../../middleware/errors.js";
-import { assertStudyAccess } from "../../middleware/studyAccess.js";
+import { assertStudyAccess, filterByStudyScope, resolveStudyScope } from "../../middleware/studyAccess.js";
 import { validateBody } from "../../middleware/validate.js";
 import { writeAudit } from "../audit/service.js";
 import { sdtmRouter } from "./sdtm.js";
@@ -19,8 +19,9 @@ const bodySchema = z.object({
   kind: z.enum(["subjects_csv", "studies_csv"]).default("subjects_csv"),
 });
 
-exportsRouter.get("/", authenticate, requirePermission("export:view"), async (_req, res, next) => {
+exportsRouter.get("/", authenticate, requirePermission("export:view"), async (req, res, next) => {
   try {
+    const scope = await resolveStudyScope(req.user!);
     const rows = await db
       .select({
         id: dataExports.id,
@@ -39,7 +40,10 @@ exportsRouter.get("/", authenticate, requirePermission("export:view"), async (_r
       .orderBy(desc(dataExports.createdAt))
       .limit(100);
     res.json({
-      data: rows,
+      data: filterByStudyScope(
+        rows.filter((r): r is typeof r & { studyId: string } => Boolean(r.studyId)),
+        scope,
+      ),
       meta: { note: "Study Data Export history — PROTOTYPE CSV, not full CDISC SDTM/ADaM" },
     });
   } catch (err) {

@@ -49,12 +49,16 @@ export function InteropPipeline() {
     >
       <div className="container interop__inner">
         <div className="interop__copy">
-          <span className="eyebrow">Interoperability</span>
-          <h2 id="interop-heading" className="h1">
+          <span className="eyebrow">Interoperability · conceptual visualization</span>
+          <h2 id="interop-heading" className="h2">
             One research system.
             <br />
             Every standard.
           </h2>
+          <p className="body">
+            Illustrated pipeline only. Live FHIR R4 prototype and adapter status (
+            <strong>ABDM / HIS / EDC = NOT CONNECTED</strong>) are in Command Center.
+          </p>
         </div>
 
         <div className="interop__pipe" aria-label="Infrastructure pipeline">

@@ -16,9 +16,14 @@ export function FinalCTA() {
           <br />
           <span>Auditable.</span>
         </h2>
-        <MagneticButton href="#command-center" className="final__cta">
-          Enter the Command Center
-        </MagneticButton>
+        <div className="final__actions">
+          <MagneticButton href="#command-center" className="final__cta">
+            Enter Live Command Center
+          </MagneticButton>
+          <a href="#platform" className="final__secondary">
+            Review the platform
+          </a>
+        </div>
       </div>
     </section>
   );

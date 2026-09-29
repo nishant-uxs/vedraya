@@ -8,10 +8,10 @@ Honest assessment for SIH26046. **Not** a production security certification.
 |---|---|
 | Password hashing | Argon2id |
 | Session cookie | HTTP-only `vedraya_sid`; `SameSite=lax`; `Secure` in production |
-| CSRF | Double-submit: readable `vedraya_csrf` cookie + required `X-CSRF-Token` on unsafe methods (login/health exempt) |
+| CSRF | Double-submit: readable `vedraya_csrf` cookie + required `X-CSRF-Token` on unsafe methods when a session cookie is present (login/health/no-session exempt → 401) |
 | Auth middleware | Session lookup; 401 if missing/invalid |
 | RBAC | `requirePermission` |
-| Study-level ACL | `study_memberships` — users with rows are scoped; admin bypass; zero rows = global (compat) |
+| Study-level ACL | `study_memberships` — admin+regulator unrestricted; other roles require membership (0 rows = deny); sites/investigators catalogs global |
 | CORS | `CORS_ORIGIN` + credentials |
 | Helmet | Default headers |
 | Body limits | `express.json({ limit: "1mb" })` |
@@ -31,7 +31,7 @@ Honest assessment for SIH26046. **Not** a production security certification.
 | Topic | Status |
 |---|---|
 | Redis rate limiting | Interface ready; DB store available; Redis not wired |
-| Exhaustive IDOR on every nested resource | Study ACL on studies/AE/export/FHIR; not every table yet |
+| Exhaustive IDOR on every nested resource | Study ACL extended Phase 5; sites/investigators catalogs still global; zero-membership roles still global |
 | Session revoke UI | Not built |
 | WORM audit storage | Not built |
 

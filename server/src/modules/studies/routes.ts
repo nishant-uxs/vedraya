@@ -56,17 +56,32 @@ studiesRouter.get("/", authenticate, requirePermission("study:view"), async (req
   }
 });
 
-studiesRouter.get("/kpis", authenticate, requirePermission("study:view"), async (_req, res, next) => {
+studiesRouter.get("/kpis", authenticate, requirePermission("study:view"), async (req, res, next) => {
   try {
-    const [agg] = await db
-      .select({
-        total: sql<number>`count(*)::int`,
-        active: sql<number>`count(*) filter (where ${studies.status} in ('active','recruiting','follow_up'))::int`,
-        atRisk: sql<number>`count(*) filter (where ${studies.riskScore} >= 60 and ${studies.status} <> 'archived')::int`,
-        completed: sql<number>`count(*) filter (where ${studies.status} = 'completed')::int`,
-        highAlerts: sql<number>`count(*) filter (where ${studies.riskScore} >= 60 and ${studies.status} in ('active','recruiting'))::int`,
-      })
-      .from(studies);
+    const scope = await resolveStudyScope(req.user!);
+    const scoped =
+      scope === null
+        ? db
+            .select({
+              total: sql<number>`count(*)::int`,
+              active: sql<number>`count(*) filter (where ${studies.status} in ('active','recruiting','follow_up'))::int`,
+              atRisk: sql<number>`count(*) filter (where ${studies.riskScore} >= 60 and ${studies.status} <> 'archived')::int`,
+              completed: sql<number>`count(*) filter (where ${studies.status} = 'completed')::int`,
+              highAlerts: sql<number>`count(*) filter (where ${studies.riskScore} >= 60 and ${studies.status} in ('active','recruiting'))::int`,
+            })
+            .from(studies)
+        : db
+            .select({
+              total: sql<number>`count(*)::int`,
+              active: sql<number>`count(*) filter (where ${studies.status} in ('active','recruiting','follow_up'))::int`,
+              atRisk: sql<number>`count(*) filter (where ${studies.riskScore} >= 60 and ${studies.status} <> 'archived')::int`,
+              completed: sql<number>`count(*) filter (where ${studies.status} = 'completed')::int`,
+              highAlerts: sql<number>`count(*) filter (where ${studies.riskScore} >= 60 and ${studies.status} in ('active','recruiting'))::int`,
+            })
+            .from(studies)
+            .where(inArray(studies.id, scope.length ? scope : ["00000000-0000-0000-0000-000000000000"]));
+
+    const [agg] = await scoped;
 
     res.json({
       data: {
@@ -141,6 +156,7 @@ studiesRouter.patch(
     try {
       const [prev] = await db.select().from(studies).where(eq(studies.id, req.params.id)).limit(1);
       if (!prev) throw new AppError(404, "NOT_FOUND", "Study not found");
+      await assertStudyAccess(req.user!, prev.id);
 
       const body = req.body as z.infer<typeof updateSchema>;
       if (body.status && body.status !== prev.status) {
@@ -186,6 +202,7 @@ studiesRouter.post(
     try {
       const [prev] = await db.select().from(studies).where(eq(studies.id, req.params.id)).limit(1);
       if (!prev) throw new AppError(404, "NOT_FOUND", "Study not found");
+      await assertStudyAccess(req.user!, prev.id);
       if (prev.status === "archived") {
         throw new AppError(400, "ALREADY_ARCHIVED", "Study already archived");
       }

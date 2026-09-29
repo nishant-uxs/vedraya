@@ -1,0 +1,132 @@
+.vseq {
+  position: relative;
+  width: 100%;
+  background: #070809;
+}
+
+.vseq__sticky {
+  position: sticky;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  margin-left: calc(50% - 50vw);
+  background: #070809;
+}
+
+/* Atmospheric glow behind the floating product — not neon */
+.vseq__sticky::before {
+  content: "";
+  position: absolute;
+  right: -8%;
+  top: 42%;
+  width: min(70vw, 920px);
+  height: min(70vw, 920px);
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 45% 48%, rgba(141, 223, 234, 0.14) 0%, transparent 42%),
+    radial-gradient(circle at 58% 55%, rgba(55, 80, 120, 0.1) 0%, transparent 55%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+  animation: vseq-glow 9s ease-in-out infinite;
+}
+
+.vseq__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  animation: vseq-float 8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.vseq__loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-content: center;
+  gap: var(--space-1);
+  background: #070809;
+  text-align: center;
+}
+
+.vseq__mark {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: #f5f7f7;
+}
+
+.vseq__loading-text {
+  font-size: 0.8125rem;
+  color: #a7afb3;
+}
+
+.vseq__fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  background: #070809;
+  padding: var(--space-4);
+}
+
+.vseq__fallback-img {
+  width: min(72vw, 820px);
+  height: auto;
+  max-height: 78vh;
+  object-fit: contain;
+  filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.45));
+}
+
+.vseq__debug {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 20;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  pointer-events: none;
+}
+
+@keyframes vseq-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes vseq-glow {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-52%) scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vseq__canvas,
+  .vseq__sticky::before {
+    animation: none !important;
+  }
+}

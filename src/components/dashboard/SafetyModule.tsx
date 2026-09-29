@@ -288,6 +288,23 @@ export function SafetyModule({ studies, onChanged }: Props) {
     }
   }
 
+  async function markAuthorityNotified() {
+    if (!selected || !can("ae:update")) return;
+    setBusy(true);
+    try {
+      const row = await api.notifyAeAuthority(selected.id, {
+        reason: "Authority notified (demo timeline tracking)",
+      });
+      setSelected(row);
+      await load();
+      onChanged?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Notify failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const studyCode = (id: string) => studies.find((s) => s.id === id)?.code ?? id.slice(0, 8);
 
   return (
@@ -304,6 +321,7 @@ export function SafetyModule({ studies, onChanged }: Props) {
           <span className="ops__kpi-static">Pending review {kpis?.pendingReview ?? "—"}</span>
           <span className="ops__kpi-static">Pending coding {kpis?.pendingCoding ?? "—"}</span>
           <span className="ops__kpi-static">Coded {kpis?.coded ?? "—"}</span>
+          <span className="ops__kpi-static">Overdue reporting {kpis?.overdueReporting ?? "—"}</span>
         </div>
       </header>
 
@@ -364,6 +382,12 @@ export function SafetyModule({ studies, onChanged }: Props) {
               <p className="mono">
                 SAE: {selected.isSerious ? "yes" : "no"} · {selected.severity} · {selected.status}
                 {selected.codingStatus ? ` · coding: ${selected.codingStatus}` : ""}
+                {selected.reportingDueAt
+                  ? ` · report due: ${new Date(selected.reportingDueAt).toLocaleString()}`
+                  : ""}
+                {selected.authorityNotifiedAt
+                  ? ` · notified: ${new Date(selected.authorityNotifiedAt).toLocaleString()}`
+                  : ""}
               </p>
               <div className="ops__actions">
                 {(AE_TRANSITIONS[selected.status] ?? []).map((st) => {
@@ -376,6 +400,11 @@ export function SafetyModule({ studies, onChanged }: Props) {
                     </button>
                   );
                 })}
+                {can("ae:update") && selected.isSerious && !selected.authorityNotifiedAt && (
+                  <button type="button" disabled={busy} onClick={() => void markAuthorityNotified()}>
+                    Mark authority notified
+                  </button>
+                )}
               </div>
 
               {can("ae:update") && (
@@ -429,7 +458,9 @@ export function SafetyModule({ studies, onChanged }: Props) {
               {can("coding:view") && (
                 <div className="ops__form">
                   <h4>MedDRA-compatible coding prototype</h4>
-                  <p className="ops__muted">Search MEDDRA_DEMO terms and apply to this AE.</p>
+                  <p className="ops__muted">
+                    Demo dictionary (MEDDRA_DEMO) — not licensed MedDRA. Search and apply to this AE.
+                  </p>
                   <label>
                     Search terms
                     <input
@@ -463,7 +494,10 @@ export function SafetyModule({ studies, onChanged }: Props) {
 
               {can("coding:apply") && (
                 <form className="ops__form" onSubmit={onAddMedication}>
-                  <h4>Concomitant medication (WHODrug-compatible coding prototype)</h4>
+                  <h4>WHODrug-compatible coding prototype</h4>
+                  <p className="ops__muted">
+                    Concomitant medication · demo dictionary (WHODRUG_DEMO) — not licensed WHODrug.
+                  </p>
                   <label>
                     Free text
                     <input

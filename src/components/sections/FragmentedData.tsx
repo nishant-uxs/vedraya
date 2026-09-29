@@ -87,7 +87,7 @@ export function FragmentedData() {
     >
       <div className="container frag__inner">
         <div className="frag__copy">
-          <h2 id="frag-heading" className="h1">
+          <h2 id="frag-heading" className="h2">
             Clinical research doesn&apos;t fail because there isn&apos;t enough data.
           </h2>
           <p className="h3 frag__second">It fails when the data is fragmented.</p>
@@ -105,8 +105,8 @@ export function FragmentedData() {
             />
             <defs>
               <linearGradient id="fragGrad" x1="0" y1="0" x2="400" y2="0">
-                <stop stopColor="#94a3b8" />
-                <stop offset="1" stopColor="#0b8fbf" />
+                <stop stopColor="var(--titanium)" />
+                <stop offset="1" stopColor="var(--accent)" />
               </linearGradient>
             </defs>
           </svg>

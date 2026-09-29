@@ -59,17 +59,17 @@ export function RiskIntelligence() {
       id="intelligence"
       className="risk section"
       aria-labelledby="risk-heading"
-      style={{ background: "#000" }}
+      style={{ background: "var(--bg-canvas)" }}
     >
       <div className="container risk__inner">
         <div className="risk__copy">
-          <span className="eyebrow">Operational monitoring</span>
-          <h2 id="risk-heading" className="h1">
+          <span className="eyebrow">Operational monitoring · conceptual visualization</span>
+          <h2 id="risk-heading" className="h2">
             See the risk before it becomes critical.
           </h2>
           <p className="body">
-            VEDRAYA computes an <strong>Operational Risk Score</strong> from measurable study
-            operations signals — not a clinically validated prediction model.
+            Illustrative risk factors for the marketing narrative — <strong>not live Command Center
+            KPIs</strong>. Live operational risk scores load from PostgreSQL after sign-in below.
           </p>
         </div>
 

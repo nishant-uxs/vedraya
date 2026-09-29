@@ -1,5 +1,5 @@
 .interop {
-  background: #000;
+  background: var(--bg-canvas);
 }
 
 .interop__inner {

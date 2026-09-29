@@ -47,8 +47,8 @@ export function ComplianceMatrix() {
     <section id="compliance" className="comp section" aria-labelledby="comp-heading">
       <div className="container comp__inner">
         <div className="comp__copy">
-          <span className="eyebrow">Continuous compliance</span>
-          <h2 id="comp-heading" className="h1">
+          <span className="eyebrow">Continuous compliance · conceptual visualization</span>
+          <h2 id="comp-heading" className="h2">
             Compliance shouldn&apos;t be a report you generate.
           </h2>
           <p className="h3 comp__second">It should be a system that continuously checks itself.</p>

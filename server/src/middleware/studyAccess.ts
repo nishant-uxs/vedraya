@@ -6,20 +6,20 @@ import type { AuthUser } from "./auth.js";
 import { AppError } from "./errors.js";
 
 /**
- * Study-level access:
- * - administration role → unrestricted (null)
- * - user with ≥1 study_memberships → restricted to those study IDs
- * - user with 0 memberships → unrestricted (backward compatible demo roles)
+ * Study-level access (PS: strictly role-based + study scope):
+ * - administration → unrestricted
+ * - regulator → unrestricted portfolio read (still RBAC-gated writes)
+ * - user with ≥1 study_memberships → those study IDs only
+ * - user with 0 memberships → empty scope (no study access)
  */
 export async function resolveStudyScope(user: AuthUser): Promise<string[] | null> {
-  if (user.roles.includes("administration")) return null;
+  if (user.roles.includes("administration") || user.roles.includes("regulator")) return null;
 
   const rows = await db
     .select({ studyId: studyMemberships.studyId })
     .from(studyMemberships)
     .where(eq(studyMemberships.userId, user.id));
 
-  if (rows.length === 0) return null;
   return rows.map((r) => r.studyId);
 }
 

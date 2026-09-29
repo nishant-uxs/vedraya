@@ -56,7 +56,7 @@ export function CopilotPanel() {
       <div className="container copilot__inner">
         <div className="copilot__copy">
           <span className="eyebrow">Research copilot</span>
-          <h2 id="copilot-heading" className="h1">
+          <h2 id="copilot-heading" className="h2">
             Ask the research system.
           </h2>
           <p className="body">

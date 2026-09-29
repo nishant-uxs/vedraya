@@ -1,27 +1,14 @@
-.glass-panel {
+.glass {
   position: relative;
-  background: rgba(18, 18, 24, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
+  background: var(--bg-panel);
   box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(12px);
 }
 
-.glass-panel--interactive {
-  transition:
-    border-color var(--dur-med) var(--ease-soft),
-    transform var(--dur-med) var(--ease-out),
-    box-shadow var(--dur-med) var(--ease-soft);
-}
-
-.glass-panel--interactive:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  transform: translateY(-1px);
+.glass--interactive:hover,
+.glass--interactive:focus-within {
+  border-color: var(--border-medium);
   box-shadow: var(--shadow-md);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .glass-panel--interactive:hover {
-    transform: none;
-  }
 }

@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
 import { ethicsCommittees, regulatorySubmissions, studies } from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
 import { AppError } from "../../middleware/errors.js";
+import { assertStudyAccess, filterByStudyScope, resolveStudyScope } from "../../middleware/studyAccess.js";
 import { validateBody } from "../../middleware/validate.js";
 import { writeAudit } from "../audit/service.js";
 
@@ -32,7 +33,7 @@ const committeeSchema = z.object({
 
 const createSubmissionSchema = z.object({
   studyId: z.string().uuid(),
-  kind: z.enum(["IEC", "CTRI", "DCGI", "OTHER"]).or(z.string().min(2).max(64)),
+  kind: z.enum(["IEC", "CTRI", "DCGI", "NDCT", "OTHER"]).or(z.string().min(2).max(64)),
   ethicsCommitteeId: z.string().uuid().optional(),
   referenceNumber: z.string().max(128).optional(),
   status: z
@@ -180,25 +181,42 @@ regulatoryRouter.get(
 
 // --- Submissions + KPIs ---
 
-regulatoryRouter.get("/kpis", authenticate, requirePermission("regulatory:view"), async (_req, res, next) => {
+regulatoryRouter.get("/kpis", authenticate, requirePermission("regulatory:view"), async (req, res, next) => {
   try {
-    const [agg] = await db
+    const scope = await resolveStudyScope(req.user!);
+    const rows = await db
       .select({
-        pendingReview: sql<number>`count(*) filter (where ${regulatorySubmissions.status} in ('submitted','under_review'))::int`,
-        overdue: sql<number>`count(*) filter (where ${regulatorySubmissions.dueAt} < now() and ${regulatorySubmissions.status} not in ('approved','registered','rejected','expired'))::int`,
-        ctriRegistered: sql<number>`count(*) filter (where ${regulatorySubmissions.kind} = 'CTRI' and ${regulatorySubmissions.status} = 'registered')::int`,
-        ctriPending: sql<number>`count(*) filter (where ${regulatorySubmissions.kind} = 'CTRI' and ${regulatorySubmissions.status} not in ('registered','rejected','expired'))::int`,
-        total: sql<number>`count(*)::int`,
+        studyId: regulatorySubmissions.studyId,
+        kind: regulatorySubmissions.kind,
+        status: regulatorySubmissions.status,
+        dueAt: regulatorySubmissions.dueAt,
       })
       .from(regulatorySubmissions);
+    const scoped = filterByStudyScope(rows, scope);
+    const now = Date.now();
+    const pendingReview = scoped.filter((r) =>
+      ["submitted", "under_review"].includes(r.status),
+    ).length;
+    const overdue = scoped.filter(
+      (r) =>
+        r.dueAt &&
+        r.dueAt.getTime() < now &&
+        !["approved", "registered", "rejected", "expired"].includes(r.status),
+    ).length;
+    const ctriRegistered = scoped.filter(
+      (r) => r.kind === "CTRI" && r.status === "registered",
+    ).length;
+    const ctriPending = scoped.filter(
+      (r) => r.kind === "CTRI" && !["registered", "rejected", "expired"].includes(r.status),
+    ).length;
 
     res.json({
       data: {
-        pendingEthicsReviews: agg?.pendingReview ?? 0,
-        overdueSubmissions: agg?.overdue ?? 0,
-        ctriRegistered: agg?.ctriRegistered ?? 0,
-        ctriPending: agg?.ctriPending ?? 0,
-        total: agg?.total ?? 0,
+        pendingEthicsReviews: pendingReview,
+        overdueSubmissions: overdue,
+        ctriRegistered,
+        ctriPending,
+        total: scoped.length,
         source: "postgresql",
         computedAt: new Date().toISOString(),
         note: "CTRI TRACKING only — no external CTRI API integration",
@@ -214,6 +232,8 @@ regulatoryRouter.get("/submissions", authenticate, requirePermission("regulatory
     const kind = typeof req.query.kind === "string" ? req.query.kind : undefined;
     const status = typeof req.query.status === "string" ? req.query.status : undefined;
     const studyId = typeof req.query.studyId === "string" ? req.query.studyId : undefined;
+    if (studyId) await assertStudyAccess(req.user!, studyId);
+    const scope = await resolveStudyScope(req.user!);
     const filters = [];
     if (kind) filters.push(eq(regulatorySubmissions.kind, kind));
     if (status) filters.push(eq(regulatorySubmissions.status, status));
@@ -243,7 +263,7 @@ regulatoryRouter.get("/submissions", authenticate, requirePermission("regulatory
       .where(filters.length ? and(...filters) : undefined)
       .orderBy(desc(regulatorySubmissions.updatedAt));
 
-    res.json({ data: rows });
+    res.json({ data: filterByStudyScope(rows, scope) });
   } catch (err) {
     next(err);
   }
@@ -261,6 +281,7 @@ regulatoryRouter.get(
         .where(eq(regulatorySubmissions.id, req.params.id))
         .limit(1);
       if (!row) throw new AppError(404, "NOT_FOUND", "Submission not found");
+      await assertStudyAccess(req.user!, row.studyId);
       res.json({ data: row });
     } catch (err) {
       next(err);
@@ -276,6 +297,7 @@ regulatoryRouter.post(
   async (req, res, next) => {
     try {
       const body = req.body as z.infer<typeof createSubmissionSchema>;
+      await assertStudyAccess(req.user!, body.studyId);
       const [study] = await db.select().from(studies).where(eq(studies.id, body.studyId)).limit(1);
       if (!study) throw new AppError(404, "NOT_FOUND", "Study not found");
 
@@ -332,6 +354,7 @@ regulatoryRouter.patch(
         .where(eq(regulatorySubmissions.id, req.params.id))
         .limit(1);
       if (!prev) throw new AppError(404, "NOT_FOUND", "Submission not found");
+      await assertStudyAccess(req.user!, prev.studyId);
 
       const body = req.body as z.infer<typeof statusSchema>;
       const allowed = REG_TRANSITIONS[prev.status] ?? [];
@@ -389,6 +412,7 @@ regulatoryRouter.patch(
         .where(eq(regulatorySubmissions.id, req.params.id))
         .limit(1);
       if (!prev) throw new AppError(404, "NOT_FOUND", "Submission not found");
+      await assertStudyAccess(req.user!, prev.studyId);
       if (prev.kind !== "CTRI") {
         throw new AppError(400, "VALIDATION", "CTRI tracking only applies to kind=CTRI records");
       }

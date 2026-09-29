@@ -240,6 +240,29 @@ export const api = {
     request<ConcomitantMedication[]>(
       `/coding/medications${qs({ adverseEventId })}`,
     ),
+  listDeviations: () => request<ProtocolDeviation[]>("/quality/deviations"),
+  createDeviation: (body: {
+    studyId: string;
+    description: string;
+    severity?: "minor" | "major" | "critical";
+    participantId?: string;
+    siteId?: string;
+  }) =>
+    request<ProtocolDeviation>("/quality/deviations", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listDataQueries: () => request<DataQueryRow[]>("/quality/queries"),
+  createDataQuery: (body: { studyId: string; question: string; participantId?: string }) =>
+    request<DataQueryRow>("/quality/queries", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  notifyAeAuthority: (id: string, body?: { authorityNotifiedAt?: string; reason?: string }) =>
+    request<AdverseEvent>(`/adverse-events/${id}/notify-authority`, {
+      method: "PATCH",
+      body: JSON.stringify(body ?? {}),
+    }),
   exportSdtmAe: async (studyId: string): Promise<{ csv: string; exportId: string | null }> => {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     const csrf = getCsrfTokenFromCookie();
@@ -486,7 +509,9 @@ export type AeKpis = {
   pendingReview: number;
   pendingCoding: number;
   coded: number;
+  overdueReporting?: number;
   total: number;
+  note?: string;
 };
 
 export type ExportRecord = {
@@ -559,6 +584,27 @@ export type AdverseEvent = {
   resolvedAt?: string | null;
   codingStatus?: string;
   seriousnessCriteria?: string | null;
+  reportingDueAt?: string | null;
+  authorityNotifiedAt?: string | null;
+};
+
+export type ProtocolDeviation = {
+  id: string;
+  studyId: string;
+  code: string;
+  description: string;
+  severity: string;
+  status: string;
+  detectedAt: string;
+};
+
+export type DataQueryRow = {
+  id: string;
+  studyId: string;
+  code: string;
+  question: string;
+  status: string;
+  raisedAt: string;
 };
 
 export type CodingTerm = {

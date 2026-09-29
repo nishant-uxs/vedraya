@@ -9,7 +9,7 @@
 
 html {
   scroll-behavior: auto;
-  background: var(--bg-canvas);
+  background: var(--bg);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -35,9 +35,10 @@ html.lenis body {
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg-canvas);
+  background: var(--bg);
   color: var(--text-primary);
   overflow-x: hidden;
+  transition: var(--theme-transition);
 }
 
 #root {
@@ -86,7 +87,7 @@ p {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent-cyan);
+  outline: 2px solid var(--accent-cyan-deep);
   outline-offset: 3px;
 }
 
@@ -119,6 +120,19 @@ p {
 
 .section--subtle {
   background: var(--bg-subtle);
+}
+
+.section-fallback {
+  min-height: 32vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg-canvas);
+}
+
+.section-fallback__rule {
+  width: min(12rem, 40vw);
+  height: 1px;
+  background: var(--border);
 }
 
 .eyebrow {
@@ -186,8 +200,8 @@ p {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
   background-size: 80px 80px;
   mask-image: radial-gradient(ellipse at 50% 40%, black 10%, transparent 70%);
   opacity: 0.5;

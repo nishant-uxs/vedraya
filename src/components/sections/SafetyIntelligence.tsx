@@ -45,8 +45,8 @@ export function SafetyIntelligence() {
     >
       <div className="container safety__inner">
         <div className="safety__copy">
-          <span className="eyebrow">Pharmacovigilance</span>
-          <h2 id="safety-heading" className="h1">
+          <span className="eyebrow">Pharmacovigilance · conceptual visualization</span>
+          <h2 id="safety-heading" className="h2">
             Safety doesn&apos;t belong in another spreadsheet.
           </h2>
           <p className="body">

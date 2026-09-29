@@ -1,9 +1,11 @@
-# AIIA ResearchOS — Design System & Motion Bible
+# VEDRAYA — Design System & Motion Bible
+
+> **Visual source of truth (current product):** light clinical ceramic surfaces matching the Research Core hardware frames. Cyan is a *system signal*, not a brand wash. The historical dark AIIA ResearchOS notes below remain for motion/IA principles only where they do not conflict with this palette.
 
 ## 01. Product Identity
 
-Product name: **AIIA ResearchOS**
-Descriptor: **Clinical Research Intelligence Platform**
+Product name: **VEDRAYA**
+Descriptor: **Clinical Research Intelligence**
 
 Core idea:
 
@@ -31,18 +33,27 @@ Use Apple's underlying design principles for hierarchy, spacing, typography, con
 
 ### Core visual language
 
-Dark, sophisticated, precise, technical.
+Premium · clinical · futuristic · precise · quiet · engineered.
 
-Palette:
-- near-black / midnight navy background
-- soft white primary text
-- cool gray secondary text
-- electric cyan primary accent
-- restrained violet secondary accent
-- green / amber / red only for actual status
+Physical product cues: white ceramic, frosted materials, brushed titanium, subtle cyan illumination, precision circular geometry.
+
+**Palette (canonical):**
+- Canvas: `#F7F8F7`
+- Surface: `#FFFFFF`
+- Primary text: `#111315`
+- Secondary text: `#6B7175`
+- Muted: `#8C9296`
+- Titanium: `#B9BEC2`
+- Border: `#D9DDDF`
+- Subtle: `#EEF1F1`
+- Cyan signal: `#8DDFEA`
+- Deep cyan: `#237F89`
+- Dark: `#111416` / `#1B2022` (closing / high-contrast panels only)
+
+Cyan = active state, progress, system status — not decoration everywhere.
 
 Avoid:
-- neon overload
+- cyberpunk / neon overload / purple AI gradients
 - huge gradient blobs
 - excessive glassmorphism
 - cartoon medical imagery
@@ -57,8 +68,8 @@ Create a deliberate type scale.
 
 Suggested:
 - Display: 72–96px desktop
-- H1: 56–72px
-- H2: 40–52px
+- H1: 56–72px (hero only)
+- H2: 40–52px (section titles)
 - H3: 24–32px
 - Body: 16–18px
 - Small UI: 12–14px

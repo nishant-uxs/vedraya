@@ -3,12 +3,16 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
 import { studyMilestones, studies } from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
+import { assertStudyAccess, filterByStudyScope, resolveStudyScope } from "../../middleware/studyAccess.js";
 
 export const milestonesRouter = Router();
 
 milestonesRouter.get("/", authenticate, requirePermission("milestone:view"), async (req, res, next) => {
   try {
     const studyId = typeof req.query.studyId === "string" ? req.query.studyId : undefined;
+    if (studyId) await assertStudyAccess(req.user!, studyId);
+
+    const scope = await resolveStudyScope(req.user!);
     const rows = await db
       .select({
         id: studyMilestones.id,
@@ -25,7 +29,8 @@ milestonesRouter.get("/", authenticate, requirePermission("milestone:view"), asy
       .leftJoin(studies, eq(studyMilestones.studyId, studies.id))
       .where(studyId ? eq(studyMilestones.studyId, studyId) : undefined)
       .orderBy(desc(studyMilestones.createdAt));
-    res.json({ data: rows });
+
+    res.json({ data: filterByStudyScope(rows, scope) });
   } catch (err) {
     next(err);
   }

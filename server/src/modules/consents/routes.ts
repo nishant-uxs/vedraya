@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
 import { consentVersions, consents, participants, studies } from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
 import { AppError } from "../../middleware/errors.js";
+import { assertStudyAccess, filterByStudyScope, resolveStudyScope } from "../../middleware/studyAccess.js";
 import { validateBody } from "../../middleware/validate.js";
 import { writeAudit } from "../audit/service.js";
 
@@ -38,28 +39,21 @@ const statusSchema = z.object({
   reason: z.string().max(500).optional(),
 });
 
-consentsRouter.get("/kpis", authenticate, requirePermission("consent:view"), async (_req, res, next) => {
+consentsRouter.get("/kpis", authenticate, requirePermission("consent:view"), async (req, res, next) => {
   try {
-    const [agg] = await db
-      .select({
-        pending: sql<number>`count(*) filter (where ${consents.status} = 'pending')::int`,
-        obtained: sql<number>`count(*) filter (where ${consents.status} = 'obtained')::int`,
-        withdrawn: sql<number>`count(*) filter (where ${consents.status} = 'withdrawn')::int`,
-        expired: sql<number>`count(*) filter (where ${consents.status} = 'expired')::int`,
-        total: sql<number>`count(*)::int`,
-      })
-      .from(consents);
-    res.json({
-      data: {
-        pending: agg?.pending ?? 0,
-        obtained: agg?.obtained ?? 0,
-        withdrawn: agg?.withdrawn ?? 0,
-        expired: agg?.expired ?? 0,
-        total: agg?.total ?? 0,
-        source: "postgresql",
-        computedAt: new Date().toISOString(),
-      },
-    });
+    const scope = await resolveStudyScope(req.user!);
+    const rows = await db.select({ status: consents.status, studyId: consents.studyId }).from(consents);
+    const scoped = filterByStudyScope(rows, scope);
+    const data = {
+      pending: scoped.filter((r) => r.status === "pending").length,
+      obtained: scoped.filter((r) => r.status === "obtained").length,
+      withdrawn: scoped.filter((r) => r.status === "withdrawn").length,
+      expired: scoped.filter((r) => r.status === "expired").length,
+      total: scoped.length,
+      source: "postgresql",
+      computedAt: new Date().toISOString(),
+    };
+    res.json({ data });
   } catch (err) {
     next(err);
   }
@@ -68,6 +62,8 @@ consentsRouter.get("/kpis", authenticate, requirePermission("consent:view"), asy
 consentsRouter.get("/versions", authenticate, requirePermission("consent:view"), async (req, res, next) => {
   try {
     const studyId = typeof req.query.studyId === "string" ? req.query.studyId : undefined;
+    if (studyId) await assertStudyAccess(req.user!, studyId);
+    const scope = await resolveStudyScope(req.user!);
     const rows = studyId
       ? await db
           .select()
@@ -75,7 +71,7 @@ consentsRouter.get("/versions", authenticate, requirePermission("consent:view"),
           .where(eq(consentVersions.studyId, studyId))
           .orderBy(desc(consentVersions.createdAt))
       : await db.select().from(consentVersions).orderBy(desc(consentVersions.createdAt));
-    res.json({ data: rows });
+    res.json({ data: filterByStudyScope(rows, scope) });
   } catch (err) {
     next(err);
   }
@@ -89,6 +85,7 @@ consentsRouter.post(
   async (req, res, next) => {
     try {
       const body = req.body as z.infer<typeof createVersionSchema>;
+      await assertStudyAccess(req.user!, body.studyId);
       const [study] = await db.select().from(studies).where(eq(studies.id, body.studyId)).limit(1);
       if (!study) throw new AppError(404, "NOT_FOUND", "Study not found");
 
@@ -121,6 +118,8 @@ consentsRouter.get("/", authenticate, requirePermission("consent:view"), async (
   try {
     const status = typeof req.query.status === "string" ? req.query.status : undefined;
     const studyId = typeof req.query.studyId === "string" ? req.query.studyId : undefined;
+    if (studyId) await assertStudyAccess(req.user!, studyId);
+    const scope = await resolveStudyScope(req.user!);
     const filters = [];
     if (status) filters.push(eq(consents.status, status as "pending" | "obtained" | "withdrawn" | "expired"));
     if (studyId) filters.push(eq(consents.studyId, studyId));
@@ -149,7 +148,7 @@ consentsRouter.get("/", authenticate, requirePermission("consent:view"), async (
       .where(filters.length ? and(...filters) : undefined)
       .orderBy(desc(consents.updatedAt));
 
-    res.json({ data: rows });
+    res.json({ data: filterByStudyScope(rows, scope) });
   } catch (err) {
     next(err);
   }
@@ -181,6 +180,7 @@ consentsRouter.get("/:id", authenticate, requirePermission("consent:view"), asyn
       .where(eq(consents.id, req.params.id))
       .limit(1);
     if (!row) throw new AppError(404, "NOT_FOUND", "Consent not found");
+    await assertStudyAccess(req.user!, row.studyId);
     res.json({ data: row });
   } catch (err) {
     next(err);
@@ -195,6 +195,7 @@ consentsRouter.post(
   async (req, res, next) => {
     try {
       const body = req.body as z.infer<typeof createSchema>;
+      await assertStudyAccess(req.user!, body.studyId);
       const [study] = await db.select().from(studies).where(eq(studies.id, body.studyId)).limit(1);
       if (!study) throw new AppError(404, "NOT_FOUND", "Study not found");
       const [participant] = await db
@@ -271,6 +272,7 @@ consentsRouter.patch(
     try {
       const [prev] = await db.select().from(consents).where(eq(consents.id, req.params.id)).limit(1);
       if (!prev) throw new AppError(404, "NOT_FOUND", "Consent not found");
+      await assertStudyAccess(req.user!, prev.studyId);
 
       const body = req.body as z.infer<typeof statusSchema>;
       if (body.status === "withdrawn" && !req.user!.permissions.includes("consent:withdraw")) {
@@ -325,6 +327,7 @@ consentsRouter.post(
     try {
       const [prev] = await db.select().from(consents).where(eq(consents.id, req.params.id)).limit(1);
       if (!prev) throw new AppError(404, "NOT_FOUND", "Consent not found");
+      await assertStudyAccess(req.user!, prev.studyId);
 
       const allowed = CONSENT_TRANSITIONS[prev.status] ?? [];
       if (!allowed.includes("withdrawn")) {

@@ -231,11 +231,57 @@ export const adverseEvents = pgTable("adverse_events", {
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   codingStatus: varchar("coding_status", { length: 32 }).notNull().default("pending"),
   seriousnessCriteria: text("seriousness_criteria"),
+  /** Regulatory reporting due clock (e.g. SAE timeline tracking) — not jurisdiction-certified. */
+  reportingDueAt: timestamp("reporting_due_at", { withTimezone: true }),
+  authorityNotifiedAt: timestamp("authority_notified_at", { withTimezone: true }),
   reportedAt: timestamp("reported_at", { withTimezone: true }).notNull().defaultNow(),
   reportedBy: uuid("reported_by").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Protocol deviation tracking (PS visit/protocol-deviation compliance) — operational, not CAPA suite. */
+export const protocolDeviations = pgTable(
+  "protocol_deviations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    studyId: uuid("study_id")
+      .notNull()
+      .references(() => studies.id, { onDelete: "cascade" }),
+    participantId: uuid("participant_id").references(() => participants.id, { onDelete: "set null" }),
+    siteId: uuid("site_id").references(() => sites.id, { onDelete: "set null" }),
+    code: varchar("code", { length: 64 }).notNull(),
+    description: text("description").notNull(),
+    severity: varchar("severity", { length: 32 }).notNull().default("minor"),
+    status: varchar("status", { length: 32 }).notNull().default("open"),
+    detectedAt: timestamp("detected_at", { withTimezone: true }).notNull().defaultNow(),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("protocol_deviations_code_uidx").on(t.code)],
+);
+
+/** Data query / data-quality status tracking (PS) — operational prototype. */
+export const dataQueries = pgTable(
+  "data_queries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    studyId: uuid("study_id")
+      .notNull()
+      .references(() => studies.id, { onDelete: "cascade" }),
+    participantId: uuid("participant_id").references(() => participants.id, { onDelete: "set null" }),
+    code: varchar("code", { length: 64 }).notNull(),
+    question: text("question").notNull(),
+    status: varchar("status", { length: 32 }).notNull().default("open"),
+    raisedAt: timestamp("raised_at", { withTimezone: true }).notNull().defaultNow(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("data_queries_code_uidx").on(t.code)],
+);
 
 /** Demo coding dictionaries — NOT official MedDRA/WHODrug licensed content. */
 export const codingDictionaries = pgTable("coding_dictionaries", {
@@ -299,8 +345,10 @@ export const concomitantMedications = pgTable("concomitant_medications", {
 });
 
 /**
- * Optional study membership. Users with ZERO rows remain globally scoped (backward compatible).
- * Users with ≥1 row are restricted to those studies. Administration role always bypasses.
+ * Study membership ACL.
+ * - administration / regulator → unrestricted study scope
+ * - ≥1 membership → restricted to those studies
+ * - 0 memberships → empty scope (no study access)
  */
 export const studyMemberships = pgTable(
   "study_memberships",
@@ -370,8 +418,9 @@ export const ethicsCommittees = pgTable("ethics_committees", {
 
 /**
  * Ethics / CTRI / other regulatory tracking records.
- * kind examples: IEC | CTRI | DCGI
+ * kind examples: IEC | CTRI | DCGI | NDCT | OTHER
  * status machine enforced in application layer.
+ * CTRI / NDCT here are TRACKING records — not external registry integrations.
  */
 export const regulatorySubmissions = pgTable("regulatory_submissions", {
   id: uuid("id").defaultRandom().primaryKey(),

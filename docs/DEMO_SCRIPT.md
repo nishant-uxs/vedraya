@@ -1,15 +1,32 @@
-# Demo script (5–7 min)
+# DEMO SCRIPT — SIH26046 (3–5 minutes)
 
-Password for all accounts: `Vedraya!Demo1`
+**Before the round:** `npm run demo:seed`  
+Password (all accounts): `Vedraya!Demo1`  
+Primary surface: **Live Command Center** (`#command-center`)
 
-1. Open landing — keep cinematic hero (theme toggle if asked).
-2. Scroll to **Command Center** → Sign in as `admin@vedraya.demo`.
-3. Show **Live PostgreSQL** KPIs (active/high-risk/alerts/total) and study table (AYU-024…).
-4. Show Safety panel counts and computed Alerts (risk + SAE).
-5. Show Audit trail rows with actor/action/time (LOGIN/SEED).
-6. Sign out → Sign in as `regulator@vedraya.demo`.
-7. API proof (optional terminal): regulator `POST /studies` → **403**.
-8. Create study as admin (API or upcoming form) → refresh KPIs → new audit row.
-9. Create/escalate AE as `pv@vedraya.demo` → audit `AE_ESCALATE`.
-10. Hit `GET /api/v1/fhir/ResearchStudy/:id` and CSV export; note **prototype** labels.
-11. Close with limitations: landing narrative still static; no MedDRA/ABDM/full CDISC; audit is append-only API foundation, not legal ALCOA+.
+| Time | Action | What to show | What to say | Expected result |
+|------|--------|--------------|-------------|-----------------|
+| 00:00–00:20 | Open app → click **Enter Live Command Center** → login `admin@vedraya.demo` | Badge **Command Center · Live PostgreSQL** | “Marketing sections above are conceptual. This panel is live PostgreSQL.” | KPIs non-zero; SOURCE postgresql |
+| 00:20–00:50 | Overview → Studies → select **AYU-024** | Study code, phase, enrolment, risk | “Portfolio and per-study drill-down from the database.” | AYU-024 visible with DB fields |
+| 00:50–01:10 | Sites → Investigators → Participants | Assigned sites/PI/subjects | “Site activation and enrolment/screening statuses are persisted.” | Lists load; no empty crash |
+| 01:10–01:50 | Safety → open AE → DEMO MedDRA code → escalate SAE → show report due / notify | Coding label + status transitions | “MedDRA-compatible coding prototype — demo dictionary, not licensed MedDRA. SAE reporting timeline is tracked here.” | Coding applied; SAE escalated; timeline fields visible |
+| 01:50–02:15 | Consents → Regulatory | Consent status; IEC / **CTRI TRACKING** / NDCT | “CTRI TRACKING only — not an external CTRI integration.” | Records load; note visible |
+| 02:15–02:35 | Quality | Deviations + data queries | “Operational quality tracking — partial vs full CAPA/EDC.” | Seeded PD/DQ or create one |
+| 02:35–02:50 | Overview alerts | Enrolment lag / SAE reporting overdue / deviation | “Alerts are computed from DB rules, not a fake static list.” | Meaningful alert rows |
+| 02:50–03:20 | Audit → **Re-verify SHA-256 chain** | VERIFIED · GLOBAL · event count | “Append-only audit with SHA-256 hash-chain integrity verification — tamper detection, not WORM.” | AUDIT CHAIN: VERIFIED |
+| 03:20–03:40 | Exports → FHIR Interop | CSV / SDTM-like AE; ResearchStudy JSON; adapters | “SDTM-like AE prototype. FHIR R4 ResearchStudy/Subject prototype. ABDM/HIS/EDC are NOT CONNECTED.” | Honest labels; load succeeds |
+| 03:40–04:10 | Logout → `monitor@vedraya.demo` | Studies = **AYU-024** only | “Study membership ACL — monitor is scoped.” | totalStudies 1 |
+| 04:10–04:30 | Logout → `regulator@vedraya.demo` → attempt create (UI absent) / note API 403 | Read-only regulator | “Regulator can view portfolio; mutations return 403 from the API.” | No create study UI |
+| 04:30–05:00 | Close | Limitations slide / LIMITATIONS.md | “Prototype boundaries are intentional for SIH staging.” | Clear honesty |
+
+## Optional API proof (terminal)
+
+```bash
+# regulator create → 403
+# monitor GET non-AYU-024 study → 403
+# GET /api/v1/audit-events/verify → valid: true
+```
+
+## After Playwright / experiments
+
+Always re-run `npm run demo:seed` so `E2E-ST-*` studies do not appear in the judge demo.

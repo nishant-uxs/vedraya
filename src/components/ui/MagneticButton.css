@@ -2,19 +2,33 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: center;
+  gap: 8px;
   min-height: 44px;
-  padding: 12px 22px;
+  padding: 12px 24px;
   border-radius: var(--radius-pill);
   font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: 0.01em;
+  border: 1px solid transparent;
   transition:
     background var(--dur-med) var(--ease-soft),
     border-color var(--dur-med) var(--ease-soft),
     box-shadow var(--dur-med) var(--ease-soft),
+    color var(--dur-med) var(--ease-soft),
     transform var(--dur-med) var(--ease-soft);
   will-change: transform;
+}
+
+.mag-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.mag-btn:disabled,
+.mag-btn.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .mag-btn__arrow {
@@ -24,50 +38,61 @@
 
 .mag-btn:hover .mag-btn__arrow,
 .mag-btn:focus-visible .mag-btn__arrow {
-  transform: translateX(4px);
+  transform: translateX(3px);
 }
 
-.mag-btn:hover {
-  transform: translateY(-1px);
+.mag-btn:active {
+  transform: translateY(1px);
 }
 
-/* Vision Pro style: soft white pill, not neon */
+/* Primary — ink */
 .mag-btn--primary {
-  background: #f5f5f7;
-  color: #000;
-  border: 1px solid transparent;
-  box-shadow: 0 0 24px rgba(90, 200, 250, 0.12);
+  background: var(--ink);
+  color: var(--on-ink);
+  border-color: var(--ink);
+  box-shadow: var(--shadow-xs);
 }
 
 .mag-btn--primary:hover {
-  box-shadow: 0 0 32px rgba(90, 200, 250, 0.2);
+  background: var(--ink-secondary);
+  box-shadow: 0 0 0 1px var(--accent-dim), var(--shadow-sm);
 }
 
+.mag-btn--primary:active {
+  filter: brightness(0.92);
+}
+
+/* Secondary — titanium edge */
 .mag-btn--secondary {
-  background: transparent;
-  color: #f5f5f7;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--border);
 }
 
 .mag-btn--secondary:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--titanium);
+  background: var(--surface-subtle);
 }
 
 .mag-btn--ghost {
   background: transparent;
   color: var(--text-secondary);
-  border: 1px solid transparent;
+  border-color: transparent;
   padding-inline: 8px;
   min-height: auto;
 }
 
 .mag-btn--ghost:hover {
-  color: #f5f5f7;
+  color: var(--text-primary);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mag-btn:hover {
+  .mag-btn:hover,
+  .mag-btn:active {
+    transform: none;
+  }
+
+  .mag-btn:hover .mag-btn__arrow {
     transform: none;
   }
 }

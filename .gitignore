@@ -16,6 +16,7 @@ dist-ssr
 .env
 server/.env
 tmp_video_check
+.vercel
 
 # Generated / local assets
 stitch-assets
@@ -26,6 +27,7 @@ stitch-assets
 vedraya-*.png
 frames/
 Product_morph_and_mechanical_unfold_*.mp4
+ui_images_for_reference/
 
 # Editor directories and files
 .vscode/*

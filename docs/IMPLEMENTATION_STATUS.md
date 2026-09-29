@@ -1,36 +1,31 @@
 # Implementation Status
 
-Last updated: 2026-09-29 (Phase 4)
+Last updated: 2026-09-29 (Phase 7 — demo freeze)
 
-Honest status for SIH26046 CTMS prototype. Do not claim more than this table.
+Honest status vs official PS ID **26046**. Matrix: `docs/SIH26046_TRACEABILITY_FINAL.md`.  
+Demo: `docs/DEMO_SCRIPT.md` · Judge answers: `docs/JUDGE_QA.md`.
 
 | Area | Status | Evidence |
 |---|---|---|
 | Backend modular monolith | **IMPLEMENTED** | `server/` Express `/api/v1` |
-| PostgreSQL + Drizzle | **IMPLEMENTED** | schema + migrations through `0003_phase4_safety_coding` |
-| Auth (HTTP-only cookie) | **IMPLEMENTED** | Argon2id + `vedraya_sid` |
-| CSRF (double-submit) | **IMPLEMENTED** | `vedraya_csrf` + `X-CSRF-Token` |
-| Rate limiter architecture | **IMPLEMENTED** | pluggable Memory/DB store; login limited |
-| RBAC + study membership ACL | **IMPLEMENTED** | `requirePermission` + `study_memberships` (monitor scoped) |
-| Study/Sites/Investigators/Participants | **IMPLEMENTED** | CRUD + transitions |
-| KPIs / Alerts | **IMPLEMENTED** | DB-derived |
-| AE/SAE + classify fields | **IMPLEMENTED** | causality/outcome/actionTaken/codingStatus |
-| MedDRA-compatible coding prototype | **IMPLEMENTED** | `MEDDRA_DEMO` synthetic dictionary + apply API |
-| WHODrug-compatible coding prototype | **IMPLEMENTED** | `WHODRUG_DEMO` + concomitant meds |
-| Consent / Regulatory / CTRI TRACKING | **IMPLEMENTED** | tracking only for CTRI |
-| GLOBAL SHA-256 audit chain | **IMPLEMENTED** | verify endpoint |
-| SDTM-like AE export | **PARTIAL / PROTOTYPE** | `/exports/sdtm/ae` — not CDISC certified |
-| ADaM | **PARTIAL** | documented interface only — no dataset |
-| FHIR R4 ResearchStudy/Subject | **PARTIAL / PROTOTYPE** | `/fhir` + `/fhir/R4/*` |
-| Interop adapters (ABDM/HIS/EDC) | **PLANNED** | status API — NOT CONNECTED |
-| Command Center modules | **IMPLEMENTED** | incl. Safety coding + Exports SDTM + Interop honesty |
-| Playwright E2E | **IMPLEMENTED** | critical path + Phase 4 safety/coding |
-| Landing / GSAP / Lenis / theme | **PRESERVED** | marketing SPA intact |
-| Official MedDRA/WHODrug licensed data | **NOT IMPLEMENTED** | demo dictionaries only |
-| Full CDISC / ABDM / HIS / EDC | **NOT IMPLEMENTED** | — |
-| WORM audit / legal ALCOA+ | **NOT CLAIMED** | — |
+| PostgreSQL + Drizzle | **IMPLEMENTED** | through `0004_phase6_quality_reporting` |
+| Auth / CSRF / rate limit | **IMPLEMENTED** | cookie session + double-submit CSRF |
+| RBAC (7 PS roles) | **IMPLEMENTED** | seed `ROLE_DEFS` |
+| Study membership ACL | **IMPLEMENTED** | admin+regulator global; others membership; 0 = deny |
+| Core CTMS modules | **IMPLEMENTED** | studies…participants, milestones, KPIs, alerts |
+| Quality (deviations/queries) | **PARTIAL** | `/quality/*` |
+| AE/SAE + reporting timeline | **PARTIAL** | demo clocks |
+| MedDRA / WHODrug | **PROTOTYPE** | DEMO dictionaries — labeled in UI |
+| Consent / Reg / CTRI TRACKING | **PARTIAL** | internal tracking |
+| Audit SHA-256 chain | **IMPLEMENTED** | append-only + verify (not WORM) |
+| SDTM-like / FHIR / Interop | **PROTOTYPE / NOT CONNECTED** | honest adapter badges |
+| Landing cinematic | **MOCKED** | conceptual labels; CTA → Live Command Center |
+| Official dictionaries / full CDISC / ABDM / eSign / WORM / certifications | **NOT IMPLEMENTED** | — |
 
-## Demo credentials
+## Demo freeze
 
-Password: `Vedraya!Demo1`  
-Monitor is study-scoped to AYU-024 only (ACL demo).
+```bash
+npm run demo:seed   # always before judge demo (clears E2E pollution)
+```
+
+Password: `Vedraya!Demo1`

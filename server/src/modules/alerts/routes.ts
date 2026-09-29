@@ -4,17 +4,21 @@ import { db } from "../../db/client.js";
 import {
   adverseEvents,
   consents,
+  dataQueries,
+  protocolDeviations,
   regulatorySubmissions,
   studyMilestones,
   studies,
 } from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
+import { filterByStudyScope, resolveStudyScope } from "../../middleware/studyAccess.js";
 
 export const alertsRouter = Router();
 
-/** Computed operational alerts — not a fake static list. */
-alertsRouter.get("/", authenticate, requirePermission("study:view"), async (_req, res, next) => {
+/** Computed operational alerts — not a fake static list. Scoped by study membership. */
+alertsRouter.get("/", authenticate, requirePermission("study:view"), async (req, res, next) => {
   try {
+    const scope = await resolveStudyScope(req.user!);
     const now = new Date();
     const delayed = await db
       .select({
@@ -128,7 +132,99 @@ alertsRouter.get("/", authenticate, requirePermission("study:view"), async (_req
       })),
     ];
 
-    res.json({ data: alerts, meta: { computedAt: now.toISOString(), count: alerts.length } });
+    const scoped = filterByStudyScope(alerts, scope);
+
+    // Enrolment lag: recruiting/active studies under 70% of target
+    const enrollStudies = await db
+      .select({
+        id: studies.id,
+        code: studies.code,
+        enrollmentCurrent: studies.enrollmentCurrent,
+        enrollmentTarget: studies.enrollmentTarget,
+        status: studies.status,
+      })
+      .from(studies)
+      .where(sql`${studies.status} in ('active','recruiting')`);
+    const enrollScoped = enrollStudies.filter(
+      (s) => scope === null || scope.includes(s.id),
+    );
+    for (const s of enrollScoped) {
+      if (s.enrollmentTarget > 0 && s.enrollmentCurrent / s.enrollmentTarget < 0.7) {
+        scoped.push({
+          level: "warn" as const,
+          type: "enrolment_lag",
+          message: `${s.code} — enrolment lag (${s.enrollmentCurrent}/${s.enrollmentTarget})`,
+          entityId: s.id,
+          studyId: s.id,
+        });
+      }
+    }
+
+    // SAE regulatory reporting overdue
+    const overdueAe = await db
+      .select({
+        id: adverseEvents.id,
+        caseCode: adverseEvents.caseCode,
+        studyId: adverseEvents.studyId,
+        reportingDueAt: adverseEvents.reportingDueAt,
+      })
+      .from(adverseEvents)
+      .where(
+        and(
+          sql`${adverseEvents.reportingDueAt} is not null`,
+          sql`${adverseEvents.authorityNotifiedAt} is null`,
+          lt(adverseEvents.reportingDueAt, now),
+          ne(adverseEvents.status, "closed"),
+        ),
+      );
+    for (const a of filterByStudyScope(overdueAe, scope)) {
+      scoped.push({
+        level: "crit" as const,
+        type: "sae_reporting_overdue",
+        message: `${a.caseCode} — SAE reporting timeline overdue`,
+        entityId: a.id,
+        studyId: a.studyId,
+      });
+    }
+
+    // Open protocol deviations / data queries
+    const openDev = await db
+      .select({
+        id: protocolDeviations.id,
+        studyId: protocolDeviations.studyId,
+        code: protocolDeviations.code,
+      })
+      .from(protocolDeviations)
+      .where(ne(protocolDeviations.status, "closed"));
+    for (const d of filterByStudyScope(openDev, scope)) {
+      scoped.push({
+        level: "warn" as const,
+        type: "protocol_deviation_open",
+        message: `Open protocol deviation ${d.code}`,
+        entityId: d.id,
+        studyId: d.studyId,
+      });
+    }
+
+    const openQ = await db
+      .select({
+        id: dataQueries.id,
+        studyId: dataQueries.studyId,
+        code: dataQueries.code,
+      })
+      .from(dataQueries)
+      .where(sql`${dataQueries.status} in ('open','under_review')`);
+    for (const q of filterByStudyScope(openQ, scope)) {
+      scoped.push({
+        level: "warn" as const,
+        type: "data_query_open",
+        message: `Open data query ${q.code}`,
+        entityId: q.id,
+        studyId: q.studyId,
+      });
+    }
+
+    res.json({ data: scoped, meta: { computedAt: now.toISOString(), count: scoped.length } });
   } catch (err) {
     next(err);
   }

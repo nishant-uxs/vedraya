@@ -76,10 +76,14 @@ export function AuditTimeline() {
     <section ref={sectionRef} className="audit section" aria-labelledby="audit-heading">
       <div className="container audit__inner">
         <div className="audit__copy">
-          <span className="eyebrow">Audit trail</span>
-          <h2 id="audit-heading" className="h1">
+          <span className="eyebrow">Audit trail · conceptual narrative</span>
+          <h2 id="audit-heading" className="h2">
             If it changed, we know who changed it.
           </h2>
+          <p className="body">
+            Static storyboard only. Live append-only audit with SHA-256 hash-chain verification is in
+            the Command Center after login — not WORM / legal ALCOA+ attestation.
+          </p>
         </div>
 
         <div className="audit__stream">

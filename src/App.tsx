@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { useLenis } from "./lib/useLenis";
 import { registerGsap, ScrollTrigger } from "./lib/motion";
 import { Navbar } from "./components/nav/Navbar";
+import { SiteFooter } from "./components/nav/SiteFooter";
 import { Hero } from "./components/hero/Hero";
 
 const FragmentedData = lazy(() =>
@@ -41,7 +42,11 @@ const FinalCTA = lazy(() =>
 );
 
 function SectionFallback() {
-  return <div className="section" aria-hidden style={{ minHeight: "40vh" }} />;
+  return (
+    <div className="section-fallback" aria-hidden>
+      <div className="section-fallback__rule" />
+    </div>
+  );
 }
 
 function LazySections() {
@@ -54,15 +59,15 @@ function LazySections() {
   return (
     <>
       <FragmentedData />
-      <CommandCenter />
-      <RiskIntelligence />
       <TrialLifecycle />
+      <RiskIntelligence />
       <SafetyIntelligence />
       <ComplianceMatrix />
       <InteropPipeline />
       <AuditTimeline />
       <CopilotPanel />
       <RoleSwitcher />
+      <CommandCenter />
       <FinalCTA />
     </>
   );
@@ -83,6 +88,7 @@ export default function App() {
           <LazySections />
         </Suspense>
       </main>
+      <SiteFooter />
     </>
   );
 }

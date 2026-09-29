@@ -211,13 +211,14 @@ export function CommandCenter() {
   return (
     <section ref={sectionRef} className="cmd" aria-labelledby="cmd-heading">
       <div className="container cmd__lead">
-        <span className="eyebrow">Operating environment</span>
+        <span className="eyebrow">Operating environment · LIVE after sign-in</span>
         <h2 id="cmd-heading" className="h2">
           The research command center
         </h2>
         <p className="body">
-          One operational surface for studies, risk, safety, compliance, and audit — denser than
-          the story above, built for day-to-day work.
+          Live PostgreSQL-backed CTMS operations for SIH26046. Sections above are cinematic /
+          conceptual narrative — this panel is the real system (studies, safety, quality, consent,
+          regulatory/CTRI tracking, audit hash-chain).
         </p>
 
         <div className="cmd__auth">

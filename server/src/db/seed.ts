@@ -29,6 +29,8 @@ import {
   concomitantMedications,
   studyMemberships,
   rateLimitBuckets,
+  protocolDeviations,
+  dataQueries,
 } from "./schema.js";
 
 const PERMS = [
@@ -184,6 +186,8 @@ async function main() {
   await db.delete(codingTerms);
   await db.delete(codingDictionaries);
   await db.delete(dataExports);
+  await db.delete(dataQueries);
+  await db.delete(protocolDeviations);
   await db.delete(consents);
   await db.delete(consentVersions);
   await db.delete(adverseEvents);
@@ -419,6 +423,7 @@ async function main() {
       actionTaken: "drug_interrupted",
       codingStatus: "pending",
       seriousnessCriteria: "hospitalization",
+      reportingDueAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
       reportedBy: adminId,
     },
     {
@@ -447,6 +452,29 @@ async function main() {
     },
   ]);
 
+  await db.insert(protocolDeviations).values([
+    {
+      code: "PD-SEED-001",
+      studyId: studyRows[0].id,
+      participantId: partRows[0]?.id,
+      siteId: siteRows[0].id,
+      description: "Visit window deviation — Day 14 visit completed 3 days late (synthetic)",
+      severity: "minor",
+      status: "open",
+      createdBy: adminId,
+    },
+  ]);
+
+  await db.insert(dataQueries).values([
+    {
+      code: "DQ-SEED-001",
+      studyId: studyRows[0].id,
+      participantId: partRows[1]?.id,
+      question: "Please confirm concomitant medication start date on CRF page 4 (synthetic)",
+      status: "open",
+      createdBy: adminId,
+    },
+  ]);
   // MedDRA-compatible DEMO dictionary (synthetic terms — NOT official MedDRA)
   const [meddra] = await db
     .insert(codingDictionaries)
@@ -541,17 +569,24 @@ async function main() {
     },
   ]);
 
-  // Monitor is study-scoped to AYU-024 only (IDOR / ACL demo). Other roles remain global.
-  const [monitorUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, "monitor@vedraya.demo"))
-    .limit(1);
-  if (monitorUser) {
-    await db.insert(studyMemberships).values({
-      userId: monitorUser.id,
-      studyId: studyRows[0].id,
-    });
+  // Study memberships — non-admin operational users require membership (strict ACL).
+  // Regulator + administration bypass via role. Monitor → AYU-024 only.
+  const ayu024 = studyRows[0].id;
+  const ayu031 = studyRows[1].id;
+  const ayu018 = studyRows[2].id;
+  const membershipPlan: Array<{ email: string; studyIds: string[] }> = [
+    { email: "pi@vedraya.demo", studyIds: [ayu024, ayu031] },
+    { email: "coord@vedraya.demo", studyIds: [ayu024, ayu031, ayu018] },
+    { email: "monitor@vedraya.demo", studyIds: [ayu024] },
+    { email: "ethics@vedraya.demo", studyIds: [ayu024, ayu031] },
+    { email: "pv@vedraya.demo", studyIds: [ayu024, ayu031, ayu018] },
+  ];
+  for (const plan of membershipPlan) {
+    const u = userByEmail[plan.email];
+    if (!u) continue;
+    for (const studyId of plan.studyIds) {
+      await db.insert(studyMemberships).values({ userId: u.id, studyId });
+    }
   }
 
   const [cv] = await db
@@ -642,12 +677,13 @@ async function main() {
       createdBy: adminId,
     },
     {
-      studyId: studyRows[1].id,
-      kind: "CTRI",
+      studyId: studyRows[0].id,
+      kind: "NDCT",
+      referenceNumber: "NDCT-TRACK-DEMO-024",
       status: "submitted",
-      submittedAt: new Date("2026-09-10"),
-      dueAt: new Date("2026-09-25"),
-      notes: "CTRI TRACKING — pending registration (no external API)",
+      submittedAt: new Date("2026-08-01"),
+      dueAt: new Date("2026-10-01"),
+      notes: "NDCT Rules 2019 TRACKING record — not a regulatory filing integration",
       createdBy: adminId,
     },
   ]);

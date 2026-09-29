@@ -37,10 +37,16 @@ Demo password (development only): `Vedraya!Demo1`
 Table `study_memberships (userId, studyId)`:
 
 - **administration** → unrestricted
-- User with **≥1 membership** → only those studies (e.g. `monitor@vedraya.demo` → AYU-024)
-- User with **0 memberships** → globally scoped (backward compatible for PI/coord/regulator demo accounts)
+- **regulator** → unrestricted portfolio read (writes still RBAC-denied)
+- User with **≥1 membership** → only those studies
+- User with **0 memberships** → **empty scope** (no study access)
 
-Enforced in studies list/detail, AE routes, exports, FHIR reads, coding apply.
+Demo seed memberships: PI → AYU-024/031; coordinator → AYU-024/031/018; monitor → AYU-024; ethics → AYU-024/031; PV → AYU-024/031/018.
+
+Enforced on: studies list/detail/KPIs/update/archive, alerts, participants, milestones, AE, quality (deviations/queries), consent, regulatory submissions/KPIs, exports history, FHIR reads, coding apply.
+
+**Not study-scoped:** sites and investigators catalog endpoints (global reference data).
+
 
 ## Consent matrix
 

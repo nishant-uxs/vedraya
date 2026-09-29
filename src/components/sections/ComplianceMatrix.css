@@ -1,5 +1,5 @@
 .comp {
-  background: #050508;
+  background: var(--bg-navy);
 }
 
 .comp__inner {

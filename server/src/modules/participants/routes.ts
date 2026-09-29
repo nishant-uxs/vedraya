@@ -5,6 +5,7 @@ import { db } from "../../db/client.js";
 import { participants, studies } from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
 import { AppError } from "../../middleware/errors.js";
+import { assertStudyAccess, filterByStudyScope, resolveStudyScope } from "../../middleware/studyAccess.js";
 import { validateBody } from "../../middleware/validate.js";
 import { writeAudit } from "../audit/service.js";
 
@@ -33,10 +34,11 @@ participantsRouter.get(
   "/",
   authenticate,
   requirePermission("participant:view"),
-  async (_req, res, next) => {
+  async (req, res, next) => {
     try {
+      const scope = await resolveStudyScope(req.user!);
       const rows = await db.select().from(participants).orderBy(desc(participants.updatedAt));
-      res.json({ data: rows });
+      res.json({ data: filterByStudyScope(rows, scope) });
     } catch (err) {
       next(err);
     }
@@ -51,6 +53,7 @@ participantsRouter.post(
   async (req, res, next) => {
     try {
       const body = req.body as z.infer<typeof createSchema>;
+      await assertStudyAccess(req.user!, body.studyId);
       const [study] = await db.select().from(studies).where(eq(studies.id, body.studyId)).limit(1);
       if (!study) throw new AppError(404, "NOT_FOUND", "Study not found");
 
@@ -104,6 +107,7 @@ participantsRouter.patch(
         .where(eq(participants.id, req.params.id))
         .limit(1);
       if (!prev) throw new AppError(404, "NOT_FOUND", "Participant not found");
+      await assertStudyAccess(req.user!, prev.studyId);
 
       const body = req.body as z.infer<typeof statusSchema>;
       const allowed = PARTICIPANT_TRANSITIONS[prev.status] ?? [];

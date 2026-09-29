@@ -9,9 +9,9 @@
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-hover);
 }
 
 .status-badge__dot {
@@ -24,7 +24,7 @@
 .status-badge--ok {
   color: var(--status-ok);
   background: var(--status-ok-dim);
-  border-color: rgba(48, 209, 88, 0.25);
+  border-color: rgba(52, 199, 89, 0.25);
 }
 
 .status-badge--warn {
@@ -36,7 +36,7 @@
 .status-badge--crit {
   color: var(--status-crit);
   background: var(--status-crit-dim);
-  border-color: rgba(255, 69, 58, 0.25);
+  border-color: rgba(255, 59, 48, 0.25);
 }
 
 .status-badge--info {

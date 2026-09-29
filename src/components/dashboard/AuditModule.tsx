@@ -81,11 +81,15 @@ export function AuditModule() {
     <div className="ops">
       <header className="ops__head">
         <div>
-          <p className="mono ops__eyebrow">Immutable audit log</p>
+          <p className="mono ops__eyebrow">Append-only audit trail</p>
           <h3 className="ops__title">Audit trail</h3>
+          <p className="ops__note">
+            Application-level append-only log with GLOBAL SHA-256 hash-chain integrity verification
+            (tamper detection). Not WORM storage or legal ALCOA+ attestation.
+          </p>
         </div>
         <button type="button" className="ops__verify-btn" onClick={() => void loadVerify()}>
-          Re-verify chain
+          Re-verify SHA-256 chain
         </button>
       </header>
 

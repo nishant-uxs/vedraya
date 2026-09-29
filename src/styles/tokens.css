@@ -1,97 +1,210 @@
+/*
+  VEDRAYA semantic theme tokens
+  Light = clinical bright. Dark = graphite operational.
+  Product stage stays cinematic dark in both themes.
+*/
+
 :root {
-  /* Surfaces — Vision Pro cinematic black */
-  --bg-deep: #000000;
-  --bg-navy: #050508;
-  --bg-panel: rgba(18, 18, 22, 0.72);
-  --bg-elevated: rgba(28, 28, 34, 0.85);
-  --bg-hover: rgba(40, 40, 48, 0.9);
-  --bg-canvas: #000000;
-  --bg-subtle: #08080c;
+  color-scheme: light;
 
-  /* Text — Apple-soft whites */
-  --text-primary: #f5f5f7;
-  --text-secondary: #a1a1a6;
-  --text-muted: #6e6e73;
-  --text-inverse: #000000;
+  /* Semantic surfaces */
+  --bg: #f7f8f7;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-subtle: #eef1f1;
 
-  /* Accents — ethereal, restrained */
-  --accent-cyan: #5ac8fa;
-  --accent-cyan-bright: #00e5ff;
-  --accent-cyan-dim: rgba(90, 200, 250, 0.12);
-  --accent-cyan-glow: rgba(90, 200, 250, 0.28);
-  --accent-violet: #7c6bff;
-  --accent-violet-dim: rgba(124, 107, 255, 0.16);
+  /* Text */
+  --text-primary: #111315;
+  --text-secondary: #62696d;
+  --text-muted: #8c9296;
+  --text-inverse: #f5f7f7;
+
+  /* Borders / material */
+  --border: #d9dddf;
+  --border-strong: #d5dadc;
+  --titanium: #b9bec2;
+
+  /* Accent — signal only */
+  --accent: #237f89;
+  --accent-soft: #8ddfea;
+  --accent-dim: rgba(141, 223, 234, 0.18);
+  --accent-glow: rgba(35, 127, 137, 0.22);
+
+  /* Chips / floating labels — high scanability, still light */
+  --chip-bg: #ffffff;
+  --chip-border: #d5dadc;
+  --chip-text: #3f474b;
+  --chip-shadow: 0 1px 2px rgba(17, 19, 21, 0.06), 0 6px 16px rgba(17, 19, 21, 0.05);
+
+  /* Product stage — cinematic dark (hero product reveal) */
+  --product-stage: #070809;
+  --product-stage-elevated: #111416;
+  --product-stage-text: #f5f7f7;
+  --product-stage-muted: #a7afb3;
+  --product-stage-border: rgba(255, 255, 255, 0.12);
+  --product-stage-scrim: rgba(7, 8, 9, 0.88);
+
+  /* Nav */
+  --nav-bg: rgba(247, 248, 247, 0.86);
+  --nav-bg-scrolled: rgba(247, 248, 247, 0.94);
+  --nav-bg-over-product: rgba(7, 8, 9, 0.72);
+  --nav-fg-over-product: #f5f7f7;
+
+  /* Inverted / graphite panels (Final CTA, primary buttons) */
+  --ink: #111416;
+  --ink-secondary: #1b2022;
+  --on-ink: #f5f7f7;
 
   /* Status */
-  --status-ok: #30d158;
-  --status-ok-dim: rgba(48, 209, 88, 0.14);
-  --status-warn: #ff9f0a;
-  --status-warn-dim: rgba(255, 159, 10, 0.14);
-  --status-crit: #ff453a;
-  --status-crit-dim: rgba(255, 69, 58, 0.14);
-
-  /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.14);
-  --border-accent: rgba(90, 200, 250, 0.35);
+  --status-ok: #2f9e6a;
+  --status-ok-dim: rgba(47, 158, 106, 0.12);
+  --status-warn: #c4841d;
+  --status-warn-dim: rgba(196, 132, 29, 0.12);
+  --status-crit: #c4473a;
+  --status-crit-dim: rgba(196, 71, 58, 0.12);
 
   /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.45);
-  --shadow-md: 0 20px 60px rgba(0, 0, 0, 0.55);
-  --shadow-lg: 0 32px 80px rgba(0, 0, 0, 0.65);
+  --shadow-xs: 0 1px 2px rgba(17, 19, 21, 0.04);
+  --shadow-sm: 0 8px 24px rgba(17, 19, 21, 0.05);
+  --shadow-md: 0 16px 40px rgba(17, 19, 21, 0.06);
+  --shadow-lg: 0 24px 56px rgba(17, 19, 21, 0.08);
 
   /* Radius */
-  --radius-xl: 24px;
-  --radius-lg: 20px;
-  --radius-md: 16px;
+  --radius-xl: 20px;
+  --radius-lg: 16px;
+  --radius-md: 14px;
   --radius-sm: 12px;
   --radius-xs: 10px;
   --radius-pill: 999px;
 
-  /* Spacing */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-7: 48px;
-  --space-8: 64px;
-  --space-9: 96px;
+  /* Spacing — 8px grid */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 48px;
+  --space-6: 64px;
+  --space-7: 80px;
+  --space-8: 96px;
+  --space-9: 128px;
   --space-10: 128px;
   --space-11: 160px;
-  --space-12: 180px;
+  --space-12: 192px;
 
   /* Type */
   --font-sans: "Geist", "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: "Geist Mono", "IBM Plex Mono", ui-monospace, monospace;
 
-  --text-display: clamp(2.75rem, 6.5vw, 5.5rem);
-  --text-h1: clamp(2.25rem, 4vw, 3.75rem);
-  --text-h2: clamp(1.75rem, 3vw, 2.75rem);
-  --text-h3: clamp(1.25rem, 2vw, 1.75rem);
-  --text-body: 1.125rem;
+  --text-display: clamp(2.5rem, 5.5vw, 4.5rem);
+  --text-h1: clamp(2.25rem, 4vw, 3.5rem);
+  --text-h2: clamp(1.75rem, 2.8vw, 2.5rem);
+  --text-h3: clamp(1.25rem, 1.8vw, 1.5rem);
+  --text-body: 1.0625rem;
   --text-ui: 0.875rem;
-  --text-micro: 0.6875rem;
+  --text-micro: 0.75rem;
 
-  --leading-tight: 1.02;
-  --leading-snug: 1.2;
+  --leading-tight: 1.05;
+  --leading-snug: 1.25;
   --leading-body: 1.55;
 
-  --tracking-tight: -0.035em;
-  --tracking-wide: 0.08em;
+  --tracking-tight: -0.03em;
+  --tracking-wide: 0.06em;
 
   /* Motion */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
   --dur-fast: 160ms;
-  --dur-med: 320ms;
-  --dur-slow: 640ms;
+  --dur-med: 280ms;
+  --dur-slow: 560ms;
+  --theme-transition: background-color 220ms var(--ease-soft), color 220ms var(--ease-soft),
+    border-color 220ms var(--ease-soft), box-shadow 220ms var(--ease-soft);
 
   /* Layout */
-  --nav-h: 52px;
+  --nav-h: 64px;
   --max-w: 1120px;
-  --section-pad-y: clamp(5rem, 12vh, 9rem);
+  --hero-max-w: 1480px;
+  --section-pad-y: clamp(4rem, 9vh, 6.5rem);
   --section-pad-x: clamp(1.5rem, 5vw, 3rem);
+
+  /* ——— Legacy aliases (existing components) ——— */
+  --bg-canvas: var(--bg);
+  --bg-deep: var(--bg);
+  --bg-subtle: var(--surface-subtle);
+  --bg-navy: var(--surface-subtle);
+  --bg-panel: var(--surface);
+  --bg-elevated: var(--surface-elevated);
+  --bg-hover: var(--surface-subtle);
+  --bg-dark: var(--ink);
+  --bg-dark-secondary: var(--ink-secondary);
+  --text-on-dark: var(--on-ink);
+  --text-on-dark-secondary: var(--text-muted);
+  --border-subtle: var(--border);
+  --border-medium: var(--border-strong);
+  --border-accent: color-mix(in srgb, var(--accent-soft) 55%, transparent);
+  --accent-cyan: var(--accent-soft);
+  --accent-cyan-deep: var(--accent);
+  --accent-cyan-bright: var(--accent-soft);
+  --accent-cyan-dim: var(--accent-dim);
+  --accent-cyan-glow: var(--accent-glow);
+  --accent-violet: var(--accent);
+  --accent-violet-dim: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0b0d0e;
+  --surface: #111416;
+  --surface-elevated: #171b1d;
+  --surface-subtle: #15191b;
+
+  --text-primary: #f5f7f7;
+  --text-secondary: #a7afb3;
+  --text-muted: #737c80;
+  --text-inverse: #111315;
+
+  --border: #2a3033;
+  --border-strong: #3a4246;
+  --titanium: #6d7579;
+
+  --accent: #8ddfea;
+  --accent-soft: #8ddfea;
+  --accent-dim: rgba(141, 223, 234, 0.14);
+  --accent-glow: rgba(141, 223, 234, 0.18);
+
+  --chip-bg: #171b1d;
+  --chip-border: #2a3033;
+  --chip-text: #a7afb3;
+  --chip-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.22);
+
+  --product-stage: #070809;
+  --product-stage-elevated: #111416;
+  --product-stage-text: #f5f7f7;
+  --product-stage-muted: #a7afb3;
+  --product-stage-border: rgba(255, 255, 255, 0.12);
+  --product-stage-scrim: rgba(7, 8, 9, 0.88);
+
+  --nav-bg: rgba(11, 13, 14, 0.82);
+  --nav-bg-scrolled: rgba(17, 20, 22, 0.94);
+  --nav-bg-over-product: rgba(11, 13, 14, 0.72);
+  --nav-fg-over-product: #f5f7f7;
+
+  --ink: #f5f7f7;
+  --ink-secondary: #e8ecec;
+  --on-ink: #111315;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.4);
+
+  --status-ok-dim: rgba(47, 158, 106, 0.18);
+  --status-warn-dim: rgba(196, 132, 29, 0.18);
+  --status-crit-dim: rgba(196, 71, 58, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --theme-transition: none;
+  }
 }

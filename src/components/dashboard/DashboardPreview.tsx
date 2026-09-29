@@ -23,6 +23,7 @@ import { SafetyModule } from "./SafetyModule";
 import { AuditModule } from "./AuditModule";
 import { ExportsModule } from "./ExportsModule";
 import { InteropModule } from "./InteropModule";
+import { QualityModule } from "./QualityModule";
 import "./DashboardPreview.css";
 
 export type DashFocus = "overview" | "study" | "risk" | "safety" | "compliance" | "audit";
@@ -34,6 +35,7 @@ export type DashModule =
   | "participants"
   | "milestones"
   | "safety"
+  | "quality"
   | "consents"
   | "regulatory"
   | "audit"
@@ -82,6 +84,7 @@ const RAIL: { key: DashModule; label: string; letter: string }[] = [
   { key: "participants", label: "Participants", letter: "P" },
   { key: "milestones", label: "Milestones", letter: "M" },
   { key: "safety", label: "Safety", letter: "Sf" },
+  { key: "quality", label: "Quality", letter: "Q" },
   { key: "consents", label: "Consents", letter: "C" },
   { key: "regulatory", label: "Regulatory", letter: "R" },
   { key: "audit", label: "Audit", letter: "A" },
@@ -97,6 +100,7 @@ const MODULE_TITLES: Record<DashModule, string> = {
   participants: "Participant enrollment",
   milestones: "Study milestones",
   safety: "Safety & adverse events",
+  quality: "Protocol deviations & data queries",
   consents: "Consent operations",
   regulatory: "Regulatory operations",
   audit: "Audit trail",
@@ -111,6 +115,7 @@ const LIVE_MODULES: DashModule[] = [
   "participants",
   "milestones",
   "safety",
+  "quality",
   "consents",
   "regulatory",
   "audit",
@@ -239,6 +244,9 @@ export function DashboardPreview({
         {source === "live" && module === "milestones" && <MilestonesModule studies={liveStudies} />}
         {source === "live" && module === "safety" && (
           <SafetyModule studies={liveStudies} onChanged={onOpsChanged} />
+        )}
+        {source === "live" && module === "quality" && (
+          <QualityModule studies={liveStudies} onChanged={onOpsChanged} />
         )}
         {source === "live" && module === "consents" && (
           <ConsentModule studies={liveStudies} initialFilter={moduleFilter} onChanged={onOpsChanged} />

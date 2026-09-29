@@ -5,12 +5,12 @@
   justify-content: center;
   overflow: hidden;
   gap: var(--space-8);
-  background: #000;
+  background: var(--bg);
 }
 
 .life__intro {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-3);
   max-width: 36rem;
   margin-inline: auto;
   text-align: center;
@@ -34,50 +34,69 @@
 
 .life__track {
   display: flex;
-  gap: 16px;
+  gap: var(--space-2);
   padding-inline: var(--section-pad-x);
   width: max-content;
   will-change: transform;
 }
 
 .life__stage {
-  width: 220px;
-  min-height: 180px;
-  padding: 16px;
+  width: 260px;
+  min-height: 248px;
+  padding: var(--space-3) var(--space-2) var(--space-2);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  background: var(--surface);
   box-shadow: var(--shadow-xs);
   transition:
     transform var(--dur-med) var(--ease-out),
     opacity var(--dur-med) var(--ease-soft),
-    border-color var(--dur-med) var(--ease-soft);
+    border-color var(--dur-med) var(--ease-soft),
+    box-shadow var(--dur-med) var(--ease-soft);
+  outline: none;
+  cursor: default;
 }
 
 .life__stage.is-past {
-  opacity: 0.45;
-  transform: scale(0.92);
+  opacity: 0.55;
+  transform: scale(0.94);
 }
 
 .life__stage.is-next {
-  opacity: 0.55;
-  transform: scale(0.96);
+  opacity: 0.7;
+  transform: scale(0.97);
 }
 
-.life__stage.is-active {
+.life__stage.is-active:not(.is-dimmed),
+.life__stage.is-expanded {
   opacity: 1;
   transform: scale(1.04);
-  border-color: var(--border-accent);
-  box-shadow: var(--shadow-sm);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in srgb, var(--accent-soft) 25%, transparent);
+  z-index: 2;
+}
+
+.life__stage.is-dimmed {
+  opacity: 0.5;
+  transform: scale(0.96);
+  border-color: var(--border);
+  box-shadow: var(--shadow-xs);
+  z-index: 0;
+}
+
+.life__stage:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .life__index {
   font-size: var(--text-micro);
-  color: var(--accent-cyan);
-  margin-bottom: 8px;
+  color: var(--accent);
+  margin: 0 0 8px;
 }
 
 .life__stage h3 {
+  margin: 0;
   font-size: 0.9375rem;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -85,16 +104,56 @@
 }
 
 .life__detail {
-  margin-top: 16px;
+  margin-top: 14px;
   display: grid;
-  gap: 6px;
-  font-size: 0.75rem;
+  gap: 12px;
+  opacity: 0.55;
+  transform: translateY(2px);
+  transition:
+    opacity var(--dur-med) var(--ease-soft),
+    transform var(--dur-med) var(--ease-out);
+}
+
+.life__stage.is-expanded .life__detail {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.life__summary {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
   color: var(--text-secondary);
 }
 
-.life__detail strong {
+.life__metrics {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.life__metrics li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.life__metrics strong {
   color: var(--text-primary);
   font-weight: 500;
+  text-align: right;
+}
+
+@media (hover: none) {
+  .life__stage.is-active .life__detail,
+  .life__stage.is-expanded .life__detail {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 768px) {
@@ -110,5 +169,11 @@
 
   .life__svg {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .life__detail {
+    transition: none;
   }
 }

@@ -10,7 +10,7 @@ type Props = {
 function badgeClass(status: InteropAdapter["status"]) {
   if (status === "WORKING") return "ops__badge ops__badge--ok";
   if (status === "PROTOTYPE") return "ops__badge ops__badge--prototype";
-  if (status === "PLANNED") return "ops__badge ops__badge--planned";
+  if (status === "NOT_CONNECTED") return "ops__badge ops__badge--planned";
   return "ops__badge ops__badge--planned";
 }
 
@@ -80,10 +80,10 @@ export function InteropModule({ studies }: Props) {
     <div className="ops">
       <header className="ops__head">
         <div>
-          <p className="mono ops__eyebrow">Interoperability prototype</p>
-          <h3 className="ops__title">FHIR read MVP</h3>
+          <p className="mono ops__eyebrow">Interoperability</p>
+          <h3 className="ops__title">FHIR R4 ResearchStudy / ResearchSubject prototype</h3>
           <p className="ops__note">
-            FHIR R4 read paths — PROTOTYPE, not full R4 certification or conformance suite.
+            Prototype read paths only. ABDM / HIS / EDC adapters remain <strong>NOT CONNECTED</strong>.
           </p>
         </div>
       </header>

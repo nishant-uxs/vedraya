@@ -21,6 +21,7 @@ import { alertsRouter } from "./modules/alerts/routes.js";
 import { consentsRouter } from "./modules/consents/routes.js";
 import { regulatoryRouter } from "./modules/regulatory/routes.js";
 import { codingRouter } from "./modules/coding/routes.js";
+import { qualityRouter } from "./modules/quality/routes.js";
 
 export function createApp() {
   const app = express();
@@ -56,6 +57,7 @@ export function createApp() {
   app.use("/api/v1/milestones", milestonesRouter);
   app.use("/api/v1/adverse-events", aeRouter);
   app.use("/api/v1/coding", codingRouter);
+  app.use("/api/v1/quality", qualityRouter);
   app.use("/api/v1/consents", consentsRouter);
   app.use("/api/v1/regulatory", regulatoryRouter);
   app.use("/api/v1/audit-events", auditRouter);

@@ -1,5 +1,5 @@
 .safety {
-  background: #000;
+  background: var(--bg-canvas);
 }
 
 .safety__inner {
@@ -79,7 +79,7 @@
 
 .safety__bars div {
   border-radius: 8px 8px 4px 4px;
-  background: linear-gradient(180deg, rgba(11, 143, 191, 0.55), rgba(11, 143, 191, 0.12));
+  background: linear-gradient(180deg, rgba(35, 127, 137, 0.35), rgba(35, 127, 137, 0.08));
   position: relative;
 }
 

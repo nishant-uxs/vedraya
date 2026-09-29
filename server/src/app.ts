@@ -10,6 +10,7 @@ import { studiesRouter } from "./modules/studies/routes.js";
 import { sitesRouter } from "./modules/sites/routes.js";
 import { investigatorsRouter } from "./modules/investigators/routes.js";
 import { participantsRouter } from "./modules/participants/routes.js";
+import { milestonesRouter } from "./modules/milestones/routes.js";
 import { auditRouter } from "./modules/audit/routes.js";
 import { aeRouter } from "./modules/adverse-events/routes.js";
 import { fhirRouter } from "./modules/interop/fhir.js";
@@ -48,6 +49,7 @@ export function createApp() {
   app.use("/api/v1/sites", sitesRouter);
   app.use("/api/v1/investigators", investigatorsRouter);
   app.use("/api/v1/participants", participantsRouter);
+  app.use("/api/v1/milestones", milestonesRouter);
   app.use("/api/v1/adverse-events", aeRouter);
   app.use("/api/v1/consents", consentsRouter);
   app.use("/api/v1/regulatory", regulatoryRouter);

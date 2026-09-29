@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/client.js";
-import { dataExports, participants, studies } from "../../db/schema.js";
+import { dataExports, participants, studies, users } from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
 import { AppError } from "../../middleware/errors.js";
 import { validateBody } from "../../middleware/validate.js";
@@ -15,9 +15,35 @@ const bodySchema = z.object({
   kind: z.enum(["subjects_csv", "studies_csv"]).default("subjects_csv"),
 });
 
-/**
- * CSV export prototype — documented mapping, not full CDISC SDTM/ADaM.
- */
+exportsRouter.get("/", authenticate, requirePermission("export:view"), async (_req, res, next) => {
+  try {
+    const rows = await db
+      .select({
+        id: dataExports.id,
+        studyId: dataExports.studyId,
+        kind: dataExports.kind,
+        format: dataExports.format,
+        createdBy: dataExports.createdBy,
+        createdAt: dataExports.createdAt,
+        studyCode: studies.code,
+        actorName: users.name,
+        actorEmail: users.email,
+      })
+      .from(dataExports)
+      .leftJoin(studies, eq(dataExports.studyId, studies.id))
+      .leftJoin(users, eq(dataExports.createdBy, users.id))
+      .orderBy(desc(dataExports.createdAt))
+      .limit(100);
+    res.json({
+      data: rows,
+      meta: { note: "Study Data Export history — PROTOTYPE CSV, not full CDISC SDTM/ADaM" },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** Study Data Export prototype — not full CDISC SDTM/ADaM. */
 exportsRouter.post(
   "/",
   authenticate,
@@ -35,7 +61,7 @@ exportsRouter.post(
           .select()
           .from(participants)
           .where(eq(participants.studyId, body.studyId));
-        csv = ["USUBJID,STUDYID,SITEID,STATUS,ENROLLED_AT"].join(",") + "\n";
+        csv = "USUBJID,STUDYID,SITEID,STATUS,ENROLLED_AT\n";
         csv += rows
           .map((r) =>
             [r.subjectCode, study.code, r.siteId ?? "", r.status, r.enrolledAt?.toISOString() ?? ""].join(
@@ -76,10 +102,7 @@ exportsRouter.post(
       });
 
       res.setHeader("Content-Type", "text/csv; charset=utf-8");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${study.code}-${body.kind}.csv"`,
-      );
+      res.setHeader("Content-Disposition", `attachment; filename="${study.code}-${body.kind}.csv"`);
       res.setHeader("X-Vedraya-Export-Id", exp.id);
       res.setHeader("X-Vedraya-Export-Note", "PROTOTYPE-CSV-NOT-FULL-CDISC");
       res.send(csv);

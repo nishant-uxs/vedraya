@@ -15,6 +15,7 @@ import {
 } from "../../middleware/auth.js";
 import { AppError } from "../../middleware/errors.js";
 import { validateBody } from "../../middleware/validate.js";
+import { rateLimit } from "../../middleware/rateLimit.js";
 import { writeAudit } from "../audit/service.js";
 
 export const authRouter = Router();
@@ -24,7 +25,15 @@ const loginSchema = z.object({
   password: z.string().min(8),
 });
 
-authRouter.post("/login", validateBody(loginSchema), async (req, res, next) => {
+authRouter.post(
+  "/login",
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    key: (req) => `login:${req.ip}:${String(req.body?.email ?? "").toLowerCase()}`,
+  }),
+  validateBody(loginSchema),
+  async (req, res, next) => {
   try {
     const { email, password } = req.body as z.infer<typeof loginSchema>;
     const [user] = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);

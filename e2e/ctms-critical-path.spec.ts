@@ -2,6 +2,7 @@ import { expect, test, type APIRequestContext } from "@playwright/test";
 import {
   ADMIN_EMAIL,
   REGULATOR_EMAIL,
+  applyApiSessionToContext,
   gotoCommandCenter,
   loginViaApi,
   uiLoginAsAdmin,
@@ -15,9 +16,8 @@ test.describe("CTMS critical path (admin)", () => {
   test.beforeEach(async ({ context, baseURL }, testInfo) => {
     if (testInfo.title.startsWith("1 —")) return;
     const api = await loginViaApi(baseURL!, ADMIN_EMAIL);
-    const { cookies } = await api.storageState();
+    await applyApiSessionToContext(context, api);
     await api.dispose();
-    await context.addCookies(cookies);
   });
   let studyId: string;
   let studyCode: string;

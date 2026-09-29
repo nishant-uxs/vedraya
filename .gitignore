@@ -43,3 +43,4 @@ ui_images_for_reference/
 scripts/__pycache__/
 *.pyc
 
+.vercel

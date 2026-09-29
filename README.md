@@ -257,12 +257,19 @@ npm run build                  # frontend production build
 
 ## Deploy notes
 
-| Surface | Hosting |
-|---------|---------|
-| Frontend (Vite SPA) | Vercel |
-| API + PostgreSQL | Run `server/` + managed Postgres (API is not serverless on Vercel by default) |
+| Surface | URL / hosting |
+|---------|----------------|
+| **Frontend (live)** | https://vedraya-three.vercel.app |
+| GitHub | https://github.com/nishant-uxs/vedraya |
+| API + PostgreSQL | Run `server/` locally (or your own host) — Vercel serves the SPA; full CTMS login needs the API |
 
-Local full stack remains the primary SIH demo path (`npm run demo:seed` + both processes).
+Local full-stack demo (recommended for SIH judges):
+
+```bash
+npm run demo:seed
+# terminal 1: cd server && npm run dev
+# terminal 2: npm run dev
+```
 
 ---
 

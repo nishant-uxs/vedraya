@@ -39,3 +39,7 @@ ui_images_for_reference/
 *.njsproj
 *.sln
 *.sw?
+
+scripts/__pycache__/
+*.pyc
+

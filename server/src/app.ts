@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import morgan from "morgan";
-import { env } from "./config/env.js";
+import { corsOrigins, env } from "./config/env.js";
 import { errorHandler, notFound } from "./middleware/errors.js";
 import { csrfProtection } from "./middleware/csrf.js";
 import { authRouter } from "./modules/auth/routes.js";
@@ -29,7 +29,13 @@ export function createApp() {
   app.use(helmet());
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin(origin, callback) {
+        if (!origin || corsOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+      },
       credentials: true,
     }),
   );

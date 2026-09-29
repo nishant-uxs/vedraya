@@ -5,8 +5,13 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   SESSION_SECRET: z.string().min(16),
   PORT: z.coerce.number().default(4000),
+  /** Comma-separated allowed browser origins (credentials CORS). */
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 
 export const env = envSchema.parse(process.env);
+
+export const corsOrigins = env.CORS_ORIGIN.split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);

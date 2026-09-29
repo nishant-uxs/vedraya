@@ -4,6 +4,10 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://vedraya-api.onrender.com/api/:path*"
+    },
+    {
       "source": "/((?!vedraya/).*)",
       "destination": "/index.html"
     }

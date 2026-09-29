@@ -1,0 +1,35 @@
+# VEDRAYA — Render Blueprint (API + Postgres)
+# Dashboard: New → Blueprint → connect nishant-uxs/vedraya
+# Or CLI: render blueprints launch (after `render login`)
+
+services:
+  - type: web
+    name: vedraya-api
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: server
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: CORS_ORIGIN
+        # Vercel SPA + local Vite; comma-separated
+        value: https://vedraya-three.vercel.app,http://localhost:3000
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vedraya-db
+          property: connectionString
+
+databases:
+  - name: vedraya-db
+    plan: free
+    databaseName: vedraya
+    user: vedraya
+    region: singapore

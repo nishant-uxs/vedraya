@@ -25,11 +25,22 @@ Demo password (development only): `Vedraya!Demo1`
 - `participant:view|manage`
 - `milestone:view|update`
 - `ae:view|create|update|escalate`
+- `coding:view|apply`
 - `consent:view|create|update|withdraw`
 - `regulatory:view|manage`
 - `audit:view`
 - `export:create|view`
 - `fhir:view`
+
+## Study-level ACL
+
+Table `study_memberships (userId, studyId)`:
+
+- **administration** → unrestricted
+- User with **≥1 membership** → only those studies (e.g. `monitor@vedraya.demo` → AYU-024)
+- User with **0 memberships** → globally scoped (backward compatible for PI/coord/regulator demo accounts)
+
+Enforced in studies list/detail, AE routes, exports, FHIR reads, coding apply.
 
 ## Consent matrix
 

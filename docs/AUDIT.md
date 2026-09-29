@@ -36,7 +36,8 @@ Writes take a Postgres advisory transaction lock (`88442201`) so concurrent inse
 
 ## Implemented
 
-- Server-side `writeAudit()` on study/site/investigator/participant/AE/export/consent/regulatory/auth mutations
+- Server-side `writeAudit()` on study/site/investigator/participant/AE/export/consent/regulatory/coding/auth mutations
+- Safety/coding actions include `AE_CLASSIFY`, `CODING_APPLIED`, `MEDICATION_CREATE`, `EXPORT_CREATE`
 - `GET /api/v1/audit-events` with filters (`action`, `entityType`, `actorUserId`, `from`, `to`, `limit`)
 - `GET /api/v1/audit-events/verify` → `{ valid, chainScope, checkedEvents, firstInvalidEvent, reason, tip }`
 - `verifyAuditChain()` detects modified payload/hash, broken previousHash, deleted/reordered sequences

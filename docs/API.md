@@ -1,62 +1,44 @@
 # API overview (v1)
 
-Base: `/api/v1` · Cookie session `vedraya_sid` · JSON unless noted.
+Base: `/api/v1` · Cookie session `vedraya_sid` · CSRF: cookie `vedraya_csrf` + header `X-CSRF-Token` on mutations · JSON unless noted.
 
 ## Auth
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/auth/login` | Rate-limited; sets HTTP-only cookie |
-| POST | `/auth/logout` | Clears session |
+| POST | `/auth/login` | Rate-limited; sets session + CSRF cookies |
+| POST | `/auth/logout` | Clears session + CSRF |
 | GET | `/auth/me` | Current user + permissions |
 
 ## Core CTMS
 
 | Area | Paths (summary) | Permissions |
 |---|---|---|
-| Studies | `GET/POST /studies`, `GET /studies/kpis`, `GET/PATCH /studies/:id`, `POST /studies/:id/archive` | `study:*` |
-| Sites | `GET/POST /sites`, `PATCH /sites/:id`, `POST /sites/assign` | `site:*` |
-| Investigators | `GET/POST /investigators`, `POST /investigators/assign`, `DELETE /investigators/assign/:id` | `investigator:*` |
-| Participants | `GET/POST /participants`, `PATCH /participants/:id/status` | `participant:*` |
-| Milestones | `GET /milestones` | `milestone:view` |
-| Adverse events | `GET/POST /adverse-events`, `GET /adverse-events/kpis`, `PATCH /adverse-events/:id/status` | `ae:*` |
-| Alerts | `GET /alerts` | authenticated + relevant view perms |
-| Exports | `GET /exports` (history), `POST /exports` → CSV (`subjects_csv` \| `studies_csv`) | `export:*` — **Study Data Export prototype, not CDISC** |
-| FHIR | `GET /fhir/ResearchStudy/:id`, `GET /fhir/ResearchSubject/:id` | `fhir:view` — **prototype** |
+| Studies | `GET/POST /studies`, `GET /studies/kpis`, `GET/PATCH /studies/:id`, archive | `study:*` + study ACL |
+| Sites / Investigators / Participants / Milestones | existing routes | unchanged |
+| Adverse events | `GET/POST /`, `GET /kpis`, `GET /:id`, `PATCH /:id/status`, `PATCH /:id/classify` | `ae:*` + study ACL |
+| Coding | `GET /coding/dictionaries`, `GET /coding/terms`, `POST /coding/apply`, `GET /coding/results`, `POST/GET /coding/medications` | `coding:view` / `coding:apply` |
+| Exports | `GET /exports`, `POST /exports` (subjects/studies CSV) | `export:*` |
+| SDTM-like AE | `POST /exports/sdtm/ae`, `GET /exports/sdtm/ae/validate` | `export:create` / `view` — **prototype** |
+| FHIR | `GET /fhir/ResearchStudy/:id`, `/ResearchSubject/:id`, and `/fhir/R4/...` aliases | `fhir:view` — **prototype** |
+| Interop | `GET /interop/adapters`, `GET /interop/adapters/:id` | `fhir:view` |
+| Alerts / Audit | existing | unchanged |
 
-## Consents
+## Coding dictionaries (demo only)
 
-| Method | Path | Permission |
-|---|---|---|
-| GET | `/consents` | `consent:view` |
-| GET | `/consents/kpis` | `consent:view` |
-| GET | `/consents/versions` | `consent:view` |
-| POST | `/consents/versions` | `consent:create` |
-| GET | `/consents/:id` | `consent:view` |
-| POST | `/consents` | `consent:create` |
-| PATCH | `/consents/:id/status` | `consent:update` (+ `consent:withdraw` for withdrawn) |
-| POST | `/consents/:id/withdraw` | `consent:withdraw` |
+- `MEDDRA_DEMO` / `DEMO-1` — MedDRA-compatible coding prototype
+- `WHODRUG_DEMO` / `DEMO-1` — WHODrug-compatible coding prototype
 
-Status machine: `pending → obtained|withdrawn|expired`; `obtained → withdrawn|expired`.
+## Consents / Regulatory
 
-## Regulatory
-
-| Method | Path | Permission |
-|---|---|---|
-| GET/POST/PATCH | `/regulatory/ethics-committees[/:id]` | `regulatory:view` / `manage` |
-| GET | `/regulatory/kpis` | `regulatory:view` |
-| GET/POST | `/regulatory/submissions` | `regulatory:view` / `manage` |
-| PATCH | `/regulatory/submissions/:id/status` | `regulatory:manage` |
-| PATCH | `/regulatory/submissions/:id/ctri` | `regulatory:manage` — **CTRI TRACKING only** |
-
-Status machine: `draft → submitted → under_review → approved|rejected|registered → expired`.
+Unchanged status machines. CTRI TRACKING remains internal only.
 
 ## Audit
 
-| Method | Path | Permission |
+| Method | Path | Notes |
 |---|---|---|
-| GET | `/audit-events` | `audit:view` — filters: `limit`, `action`, `entityType`, `actorUserId`, `from`, `to` |
-| GET | `/audit-events/verify` | `audit:view` — GLOBAL hash-chain check |
-| PATCH/DELETE | `/audit-events/:id` | **405** always (append-only) |
+| GET | `/audit-events` | filters |
+| GET | `/audit-events/verify` | GLOBAL hash chain |
+| PATCH/DELETE | `/audit-events/:id` | **405** |
 
-See `docs/AUDIT.md` for hash-chain design.
+Coding/export mutations emit `CODING_APPLIED`, `MEDICATION_CREATE`, `EXPORT_CREATE`, `AE_CLASSIFY` via `writeAudit()`.

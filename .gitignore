@@ -25,7 +25,8 @@ stitch-assets
 /playwright-report/
 /blob-report/
 vedraya-*.png
-frames/
+# Root-level frame extraction output only (not public/vedraya/*)
+/frames/
 Product_morph_and_mechanical_unfold_*.mp4
 ui_images_for_reference/
 

@@ -5,7 +5,7 @@
  * research core / network floats on the dark hero (no white card).
  */
 export const SEQUENCE_CONFIG = {
-  FRAME_DIRECTORY: "/vedraya/frames",
+  FRAME_DIRECTORY: "/vedraya/frames-alpha",
   FRAME_PREFIX: "frame-",
   FRAME_EXT: "webp",
   FRAME_COUNT: 180,

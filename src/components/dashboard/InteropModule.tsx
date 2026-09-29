@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type Participant, type Study } from "../../lib/api";
+import { api, type InteropAdapter, type Participant, type Study } from "../../lib/api";
 import { useAuth } from "../../lib/AuthProvider";
 import "./OpsModules.css";
 
@@ -7,17 +7,23 @@ type Props = {
   studies: Study[];
 };
 
-const PLANNED = ["ABDM Health ID linkage", "National FHIR gateway", "Full FHIR R4 conformance suite"];
+function badgeClass(status: InteropAdapter["status"]) {
+  if (status === "WORKING") return "ops__badge ops__badge--ok";
+  if (status === "PROTOTYPE") return "ops__badge ops__badge--prototype";
+  if (status === "PLANNED") return "ops__badge ops__badge--planned";
+  return "ops__badge ops__badge--planned";
+}
 
 export function InteropModule({ studies }: Props) {
   const { can } = useAuth();
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [adapters, setAdapters] = useState<InteropAdapter[]>([]);
   const [studyId, setStudyId] = useState(studies[0]?.id ?? "");
   const [subjectId, setSubjectId] = useState("");
   const [studyJson, setStudyJson] = useState<string | null>(null);
   const [subjectJson, setSubjectJson] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<"study" | "subject" | null>(null);
+  const [loading, setLoading] = useState<"study" | "subject" | "adapters" | null>(null);
 
   useEffect(() => {
     void api.participants().then((list) => {
@@ -30,12 +36,22 @@ export function InteropModule({ studies }: Props) {
     if (studies[0] && !studyId) setStudyId(studies[0].id);
   }, [studies, studyId]);
 
+  useEffect(() => {
+    if (!can("fhir:view")) return;
+    setLoading("adapters");
+    void api
+      .interopAdapters()
+      .then(setAdapters)
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load adapters"))
+      .finally(() => setLoading(null));
+  }, [can]);
+
   async function loadStudy() {
     if (!can("fhir:view") || !studyId) return;
     setLoading("study");
     setError(null);
     try {
-      const data = await api.fhirResearchStudy(studyId);
+      const data = await api.fhirResearchStudyR4(studyId);
       setStudyJson(JSON.stringify(data, null, 2));
     } catch (err) {
       setStudyJson(null);
@@ -50,7 +66,7 @@ export function InteropModule({ studies }: Props) {
     setLoading("subject");
     setError(null);
     try {
-      const data = await api.fhirResearchSubject(subjectId);
+      const data = await api.fhirResearchSubjectR4(subjectId);
       setSubjectJson(JSON.stringify(data, null, 2));
     } catch (err) {
       setSubjectJson(null);
@@ -66,7 +82,9 @@ export function InteropModule({ studies }: Props) {
         <div>
           <p className="mono ops__eyebrow">Interoperability prototype</p>
           <h3 className="ops__title">FHIR read MVP</h3>
-          <p className="ops__note">ResearchStudy / ResearchSubject — PROTOTYPE tag, not full R4 certification.</p>
+          <p className="ops__note">
+            FHIR R4 read paths — PROTOTYPE, not full R4 certification or conformance suite.
+          </p>
         </div>
       </header>
 
@@ -78,8 +96,25 @@ export function InteropModule({ studies }: Props) {
 
       <div className="ops__interop-grid">
         <div className="ops__panel">
+          <h4>Adapter status</h4>
+          {loading === "adapters" && <p className="ops__muted">Loading adapters…</p>}
+          {!loading && adapters.length === 0 && can("fhir:view") && (
+            <p className="ops__muted">No adapter metadata</p>
+          )}
+          <ul className="ops__planned">
+            {adapters.map((a) => (
+              <li key={a.id}>
+                {a.name}{" "}
+                <span className={badgeClass(a.status)}>{a.status}</span>
+                <p className="ops__muted">{a.note}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="ops__panel">
           <h4>
-            ResearchStudy <span className="ops__badge ops__badge--ok">SUPPORTED</span>
+            ResearchStudy (R4) <span className="ops__badge ops__badge--prototype">PROTOTYPE</span>
           </h4>
           <label>
             Study id
@@ -93,7 +128,7 @@ export function InteropModule({ studies }: Props) {
           </label>
           {can("fhir:view") ? (
             <button type="button" disabled={loading === "study"} onClick={() => void loadStudy()}>
-              {loading === "study" ? "Loading…" : "Load ResearchStudy"}
+              {loading === "study" ? "Loading…" : "Load ResearchStudy (R4)"}
             </button>
           ) : (
             <p className="ops__muted">Requires fhir:view permission</p>
@@ -103,7 +138,7 @@ export function InteropModule({ studies }: Props) {
 
         <div className="ops__panel">
           <h4>
-            ResearchSubject <span className="ops__badge ops__badge--ok">SUPPORTED</span>
+            ResearchSubject (R4) <span className="ops__badge ops__badge--prototype">PROTOTYPE</span>
           </h4>
           <label>
             Participant id
@@ -117,23 +152,12 @@ export function InteropModule({ studies }: Props) {
           </label>
           {can("fhir:view") ? (
             <button type="button" disabled={loading === "subject"} onClick={() => void loadSubject()}>
-              {loading === "subject" ? "Loading…" : "Load ResearchSubject"}
+              {loading === "subject" ? "Loading…" : "Load ResearchSubject (R4)"}
             </button>
           ) : (
             <p className="ops__muted">Requires fhir:view permission</p>
           )}
           {subjectJson && <pre className="ops__json">{subjectJson}</pre>}
-        </div>
-
-        <div className="ops__panel">
-          <h4>Planned integrations</h4>
-          <ul className="ops__planned">
-            {PLANNED.map((item) => (
-              <li key={item}>
-                {item} <span className="ops__badge ops__badge--planned">PLANNED</span>
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </div>

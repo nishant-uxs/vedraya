@@ -16,6 +16,8 @@ export function ExportsModule({ studies }: Props) {
   const [busy, setBusy] = useState(false);
   const [studyId, setStudyId] = useState("");
   const [kind, setKind] = useState<"subjects_csv" | "studies_csv">("subjects_csv");
+  const [sdtmNote, setSdtmNote] = useState<string | null>(null);
+  const [adamNote, setAdamNote] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -35,6 +37,20 @@ export function ExportsModule({ studies }: Props) {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!studyId || !can("export:view")) return;
+    void api
+      .validateSdtmAe(studyId)
+      .then((v) => {
+        setSdtmNote(v.note);
+        setAdamNote(v.adamStatus);
+      })
+      .catch(() => {
+        setSdtmNote(null);
+        setAdamNote(null);
+      });
+  }, [studyId, can]);
 
   function downloadCsv(filename: string, csv: string) {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -59,6 +75,28 @@ export function ExportsModule({ studies }: Props) {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onSdtmAeExport() {
+    if (!can("export:create") || !studyId) return;
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const { csv, exportId } = await api.exportSdtmAe(studyId);
+      const code = studies.find((s) => s.id === studyId)?.code ?? "study";
+      downloadCsv(`${code}-AE-SDTM-PROTOTYPE.csv`, csv);
+      setMessage(
+        exportId
+          ? `SDTM AE prototype export (${exportId.slice(0, 8)}…)`
+          : "SDTM AE prototype downloaded",
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "SDTM AE export failed");
     } finally {
       setBusy(false);
     }
@@ -106,6 +144,20 @@ export function ExportsModule({ studies }: Props) {
           </button>
         </div>
       )}
+
+      <div className="ops__panel">
+        <h4>SDTM AE prototype</h4>
+        <p className="ops__note">
+          {sdtmNote ?? "SDTM-like transformation prototype — not CDISC certified."}
+        </p>
+        {can("export:create") && (
+          <button type="button" disabled={busy || !studyId} onClick={() => void onSdtmAeExport()}>
+            {busy ? "Exporting…" : "Export SDTM-like AE CSV"}
+          </button>
+        )}
+        <h4>ADaM</h4>
+        <p className="ops__muted">{adamNote ?? "PARTIAL — interface only; no ADaM dataset generated."}</p>
+      </div>
 
       <div className="ops__panel">
         <h4>Export history</h4>

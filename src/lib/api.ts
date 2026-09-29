@@ -21,13 +21,41 @@ export class ApiError extends Error {
   }
 }
 
+export function getCsrfTokenFromCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|;\s*)vedraya_csrf=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function buildHeaders(init?: RequestInit): Record<string, string> {
+  const method = (init?.method ?? "GET").toUpperCase();
+  const isMutation = !["GET", "HEAD", "OPTIONS"].includes(method);
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (isMutation) {
+    const csrf = getCsrfTokenFromCookie();
+    if (csrf) headers["X-CSRF-Token"] = csrf;
+  }
+  const extra = init?.headers;
+  if (extra) {
+    if (extra instanceof Headers) {
+      extra.forEach((v, k) => {
+        headers[k] = v;
+      });
+    } else if (Array.isArray(extra)) {
+      for (const [k, v] of extra) headers[k] = v;
+    } else {
+      Object.assign(headers, extra);
+    }
+  }
+  return headers;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
+    headers: buildHeaders(init),
     ...init,
   });
 
@@ -77,10 +105,13 @@ async function createExportCsv(
   studyId: string,
   kind: "subjects_csv" | "studies_csv",
 ): Promise<{ csv: string; exportId: string | null }> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const csrf = getCsrfTokenFromCookie();
+  if (csrf) headers["X-CSRF-Token"] = csrf;
   const res = await fetch(`${API_BASE}/exports`, {
     credentials: "include",
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ studyId, kind }),
   });
   const contentType = res.headers.get("content-type") ?? "";
@@ -152,6 +183,96 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ status, reason }),
     }),
+  classifyAe: (
+    id: string,
+    body: {
+      causality?: "related" | "possibly_related" | "unlikely" | "not_related" | "not_assessed";
+      outcome?: "recovering" | "recovered" | "not_recovered" | "fatal" | "unknown";
+      actionTaken?: "none" | "dose_reduced" | "drug_interrupted" | "drug_withdrawn" | "other";
+      severity?: "mild" | "moderate" | "severe";
+      isSerious?: boolean;
+      seriousnessCriteria?: string;
+      onsetAt?: string | null;
+      resolvedAt?: string | null;
+      reason?: string;
+    },
+  ) =>
+    request<AdverseEvent>(`/adverse-events/${id}/classify`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  searchCodingTerms: (params: { dictionary?: string; q?: string; limit?: number }) =>
+    request<CodingTerm[]>(
+      `/coding/terms${qs({
+        dictionary: params.dictionary,
+        q: params.q,
+        limit: params.limit != null ? String(params.limit) : undefined,
+      })}`,
+    ),
+  applyCoding: (body: {
+    entityType: "adverse_event" | "concomitant_medication";
+    entityId: string;
+    termId: string;
+    freeText: string;
+  }) =>
+    request<CodingResultRow>("/coding/apply", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  codingResults: (params?: { entityType?: string; entityId?: string }) =>
+    request<CodingResultRow[]>(
+      `/coding/results${qs({
+        entityType: params?.entityType,
+        entityId: params?.entityId,
+      })}`,
+    ),
+  createMedication: (body: {
+    adverseEventId: string;
+    freeText: string;
+    dose?: string;
+    route?: string;
+  }) =>
+    request<ConcomitantMedication>("/coding/medications", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listMedications: (adverseEventId?: string) =>
+    request<ConcomitantMedication[]>(
+      `/coding/medications${qs({ adverseEventId })}`,
+    ),
+  exportSdtmAe: async (studyId: string): Promise<{ csv: string; exportId: string | null }> => {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const csrf = getCsrfTokenFromCookie();
+    if (csrf) headers["X-CSRF-Token"] = csrf;
+    const res = await fetch(`${API_BASE}/exports/sdtm/ae`, {
+      credentials: "include",
+      method: "POST",
+      headers,
+      body: JSON.stringify({ studyId }),
+    });
+    const contentType = res.headers.get("content-type") ?? "";
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new ApiError(
+        res.status,
+        json?.error?.code ?? "EXPORT_FAILED",
+        json?.error?.message ?? "SDTM AE export failed",
+        json?.error?.details,
+      );
+    }
+    if (!contentType.includes("text/csv")) {
+      throw new ApiError(res.status, "EXPORT_FAILED", "Unexpected SDTM export response");
+    }
+    const csv = await res.text();
+    return { csv, exportId: res.headers.get("X-Vedraya-Export-Id") };
+  },
+  validateSdtmAe: (studyId: string) =>
+    request<SdtmAeValidateResult>(`/exports/sdtm/ae/validate${qs({ studyId })}`),
+  interopAdapters: () => request<InteropAdapter[]>("/interop/adapters"),
+  fhirResearchStudyR4: (id: string) =>
+    fhirGet<Record<string, unknown>>(`/fhir/R4/ResearchStudy/${id}`),
+  fhirResearchSubjectR4: (id: string) =>
+    fhirGet<Record<string, unknown>>(`/fhir/R4/ResearchSubject/${id}`),
   participants: () => request<Participant[]>("/participants"),
   createParticipant: (body: {
     subjectCode: string;
@@ -363,6 +484,9 @@ export type AeKpis = {
   serious: number;
   escalated: number;
   pendingReview: number;
+  pendingCoding: number;
+  coded: number;
+  total: number;
 };
 
 export type ExportRecord = {
@@ -429,6 +553,64 @@ export type AdverseEvent = {
   severity: string;
   status: string;
   description: string;
+  causality?: string | null;
+  outcome?: string | null;
+  actionTaken?: string | null;
+  resolvedAt?: string | null;
+  codingStatus?: string;
+  seriousnessCriteria?: string | null;
+};
+
+export type CodingTerm = {
+  id: string;
+  code: string;
+  term: string;
+  preferredTerm: string;
+  systemOrganClass: string | null;
+  dictionaryKey?: string;
+  dictionaryVersion?: string;
+};
+
+export type CodingResultRow = {
+  id: string;
+  entityType: string;
+  entityId: string;
+  freeText: string;
+  codedAt: string;
+  status: string;
+  dictionaryKey?: string;
+  code?: string;
+  preferredTerm?: string;
+  systemOrganClass?: string | null;
+};
+
+export type ConcomitantMedication = {
+  id: string;
+  adverseEventId: string;
+  studyId: string;
+  freeText: string;
+  dose: string | null;
+  route: string | null;
+  codingStatus: string;
+  createdAt?: string;
+};
+
+export type SdtmAeValidateResult = {
+  studyId: string;
+  studyCode: string;
+  sourceRows: number;
+  targetDomain: string;
+  mapping: string;
+  note: string;
+  adamStatus: string;
+};
+
+export type InteropAdapter = {
+  id: string;
+  name: string;
+  status: "WORKING" | "PROTOTYPE" | "PLANNED" | "NOT_CONNECTED";
+  capabilities: string[];
+  note: string;
 };
 
 export type Participant = {

@@ -97,7 +97,7 @@ export function CommandCenter() {
         api.studies(),
         api.kpis(),
         api.alerts(),
-        api.auditEvents(24),
+        api.auditEvents({ limit: 24 }),
         api.adverseEvents(),
         api.consentKpis().catch(() => null),
         api.regulatoryKpis().catch(() => null),

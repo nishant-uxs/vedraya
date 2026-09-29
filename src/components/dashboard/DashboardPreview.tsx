@@ -14,10 +14,31 @@ import type {
 } from "../../lib/api";
 import { ConsentModule } from "./ConsentModule";
 import { RegulatoryModule } from "./RegulatoryModule";
+import { StudiesModule } from "./StudiesModule";
+import { SitesModule } from "./SitesModule";
+import { InvestigatorsModule } from "./InvestigatorsModule";
+import { ParticipantsModule } from "./ParticipantsModule";
+import { MilestonesModule } from "./MilestonesModule";
+import { SafetyModule } from "./SafetyModule";
+import { AuditModule } from "./AuditModule";
+import { ExportsModule } from "./ExportsModule";
+import { InteropModule } from "./InteropModule";
 import "./DashboardPreview.css";
 
 export type DashFocus = "overview" | "study" | "risk" | "safety" | "compliance" | "audit";
-export type DashModule = "overview" | "consents" | "regulatory" | "audit";
+export type DashModule =
+  | "overview"
+  | "studies"
+  | "sites"
+  | "investigators"
+  | "participants"
+  | "milestones"
+  | "safety"
+  | "consents"
+  | "regulatory"
+  | "audit"
+  | "exports"
+  | "interop";
 
 type Props = {
   focus?: DashFocus;
@@ -55,9 +76,46 @@ function formatTime(iso: string) {
 
 const RAIL: { key: DashModule; label: string; letter: string }[] = [
   { key: "overview", label: "Overview", letter: "O" },
+  { key: "studies", label: "Studies", letter: "St" },
+  { key: "sites", label: "Sites", letter: "Si" },
+  { key: "investigators", label: "Investigators", letter: "In" },
+  { key: "participants", label: "Participants", letter: "P" },
+  { key: "milestones", label: "Milestones", letter: "M" },
+  { key: "safety", label: "Safety", letter: "Sf" },
   { key: "consents", label: "Consents", letter: "C" },
   { key: "regulatory", label: "Regulatory", letter: "R" },
   { key: "audit", label: "Audit", letter: "A" },
+  { key: "exports", label: "Exports", letter: "E" },
+  { key: "interop", label: "Interop", letter: "I" },
+];
+
+const MODULE_TITLES: Record<DashModule, string> = {
+  overview: "Research Operations Overview",
+  studies: "Study operations",
+  sites: "Site operations",
+  investigators: "Investigator operations",
+  participants: "Participant enrollment",
+  milestones: "Study milestones",
+  safety: "Safety & adverse events",
+  consents: "Consent operations",
+  regulatory: "Regulatory operations",
+  audit: "Audit trail",
+  exports: "Study data export",
+  interop: "FHIR interoperability",
+};
+
+const LIVE_MODULES: DashModule[] = [
+  "studies",
+  "sites",
+  "investigators",
+  "participants",
+  "milestones",
+  "safety",
+  "consents",
+  "regulatory",
+  "audit",
+  "exports",
+  "interop",
 ];
 
 export function DashboardPreview({
@@ -111,14 +169,9 @@ export function DashboardPreview({
   const saeCount = adverseEvents.filter((a) => a.isSerious).length;
   const aeCount = adverseEvents.length;
 
-  const title =
-    module === "consents"
-      ? "Consent operations"
-      : module === "regulatory"
-        ? "Regulatory operations"
-        : module === "audit"
-          ? "Audit trail"
-          : "Research Operations Overview";
+  const title = MODULE_TITLES[module];
+
+  const showSignInBanner = source !== "live" && module !== "overview" && LIVE_MODULES.includes(module);
 
   return (
     <div className={`dash focus-${focus}`} role="region" aria-label="VEDRAYA command center">
@@ -169,55 +222,61 @@ export function DashboardPreview({
         )}
         {loading && <p className="dash__banner">Loading operational data…</p>}
 
-        {module === "consents" && source === "live" && (
+        {showSignInBanner && (
+          <p className="dash__banner">Sign in to use operational {MODULE_TITLES[module].toLowerCase()}.</p>
+        )}
+
+        {source === "live" && module === "studies" && (
+          <StudiesModule studies={liveStudies} onChanged={onOpsChanged} />
+        )}
+        {source === "live" && module === "sites" && <SitesModule studies={liveStudies} onChanged={onOpsChanged} />}
+        {source === "live" && module === "investigators" && (
+          <InvestigatorsModule studies={liveStudies} onChanged={onOpsChanged} />
+        )}
+        {source === "live" && module === "participants" && (
+          <ParticipantsModule studies={liveStudies} onChanged={onOpsChanged} />
+        )}
+        {source === "live" && module === "milestones" && <MilestonesModule studies={liveStudies} />}
+        {source === "live" && module === "safety" && (
+          <SafetyModule studies={liveStudies} onChanged={onOpsChanged} />
+        )}
+        {source === "live" && module === "consents" && (
           <ConsentModule studies={liveStudies} initialFilter={moduleFilter} onChanged={onOpsChanged} />
         )}
-        {module === "regulatory" && source === "live" && (
+        {source === "live" && module === "regulatory" && (
           <RegulatoryModule studies={liveStudies} initialFilter={moduleFilter} onChanged={onOpsChanged} />
         )}
-        {module === "audit" && (
-          <GlassPanel className="dash__panel dash__activity" interactive>
-            <div className="dash__panel-head">
-              <h4>Audit trail</h4>
-            </div>
-            <ul className="dash__activity-list mono">
-              {auditEvents.length === 0 && <li className="dash__muted">No audit events loaded</li>}
-              {auditEvents.slice(0, 20).map((e) => (
-                <li key={e.id}>
-                  {formatTime(e.occurredAt)} {e.actorName ?? "system"} · {e.action} · {e.entityType}
-                </li>
-              ))}
-            </ul>
-          </GlassPanel>
-        )}
+        {source === "live" && module === "audit" && <AuditModule />}
+        {source === "live" && module === "exports" && <ExportsModule studies={liveStudies} />}
+        {source === "live" && module === "interop" && <InteropModule studies={liveStudies} />}
 
         {module === "overview" && (
           <>
             <div className="dash__kpis">
-              <GlassPanel className="dash__kpi" interactive>
+              <button type="button" className="dash__kpi-link" onClick={() => onModuleChange?.("studies", null)}>
                 <span className="ui-label">Active studies</span>
                 <strong>
                   <MetricTicker value={kpis?.activeStudies ?? 0} />
                 </strong>
-              </GlassPanel>
-              <GlassPanel className="dash__kpi dash__kpi--crit" interactive>
+              </button>
+              <button type="button" className="dash__kpi-link" onClick={() => onModuleChange?.("studies", null)}>
                 <span className="ui-label">High risk</span>
                 <strong>
                   <MetricTicker value={kpis?.atRiskStudies ?? 0} />
                 </strong>
-              </GlassPanel>
-              <GlassPanel className="dash__kpi dash__kpi--warn" interactive>
+              </button>
+              <button type="button" className="dash__kpi-link" onClick={() => onModuleChange?.("safety", null)}>
                 <span className="ui-label">Open alerts</span>
                 <strong>
                   <MetricTicker value={alerts.length} />
                 </strong>
-              </GlassPanel>
-              <GlassPanel className="dash__kpi dash__kpi--ok" interactive>
+              </button>
+              <button type="button" className="dash__kpi-link" onClick={() => onModuleChange?.("studies", null)}>
                 <span className="ui-label">Total studies</span>
                 <strong>
                   <MetricTicker value={kpis?.totalStudies ?? 0} />
                 </strong>
-              </GlassPanel>
+              </button>
             </div>
 
             <div className="dash__kpis">
@@ -316,30 +375,43 @@ export function DashboardPreview({
                 </div>
               </GlassPanel>
 
-              <GlassPanel className="dash__panel dash__safety" interactive>
-                <div className="dash__panel-head">
-                  <h4>Safety</h4>
-                  <StatusBadge label={`${aeOpen.filter((a) => a.isSerious).length} open SAE`} status={saeCount > 0 ? "warn" : "ok"} />
-                </div>
-                <ul className="dash__stats">
-                  <li>
-                    <span>AE</span>
-                    <strong>{aeCount}</strong>
-                  </li>
-                  <li>
-                    <span>SAE</span>
-                    <strong>{saeCount}</strong>
-                  </li>
-                  <li>
-                    <span>Open</span>
-                    <strong>{aeOpen.length}</strong>
-                  </li>
-                  <li>
-                    <span>Escalated</span>
-                    <strong>{adverseEvents.filter((a) => a.status === "escalated").length}</strong>
-                  </li>
-                </ul>
-              </GlassPanel>
+              <div
+                className="dash__panel-nav"
+                role="button"
+                tabIndex={0}
+                onClick={() => onModuleChange?.("safety", null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onModuleChange?.("safety", null);
+                  }
+                }}
+              >
+                <GlassPanel className="dash__panel dash__safety" interactive>
+                  <div className="dash__panel-head">
+                    <h4>Safety</h4>
+                    <StatusBadge label={`${aeOpen.filter((a) => a.isSerious).length} open SAE`} status={saeCount > 0 ? "warn" : "ok"} />
+                  </div>
+                  <ul className="dash__stats">
+                    <li>
+                      <span>AE</span>
+                      <strong>{aeCount}</strong>
+                    </li>
+                    <li>
+                      <span>SAE</span>
+                      <strong>{saeCount}</strong>
+                    </li>
+                    <li>
+                      <span>Open</span>
+                      <strong>{aeOpen.length}</strong>
+                    </li>
+                    <li>
+                      <span>Escalated</span>
+                      <strong>{adverseEvents.filter((a) => a.status === "escalated").length}</strong>
+                    </li>
+                  </ul>
+                </GlassPanel>
+              </div>
 
               <GlassPanel className="dash__panel dash__alerts" interactive>
                 <div className="dash__panel-head">
@@ -368,25 +440,34 @@ export function DashboardPreview({
                 </div>
               </GlassPanel>
 
-              <GlassPanel className="dash__panel dash__activity" interactive>
-                <div className="dash__panel-head">
-                  <h4>Audit trail</h4>
-                </div>
-                <ul className="dash__activity-list mono">
-                  {auditEvents.length === 0 && <li className="dash__muted">No audit events loaded</li>}
-                  {auditEvents.slice(0, 8).map((e) => (
-                    <li key={e.id}>
-                      {formatTime(e.occurredAt)} {e.actorName ?? "system"} · {e.action} · {e.entityType}
-                    </li>
-                  ))}
-                </ul>
-              </GlassPanel>
+              <div
+                className="dash__panel-nav"
+                role="button"
+                tabIndex={0}
+                onClick={() => onModuleChange?.("audit", null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onModuleChange?.("audit", null);
+                  }
+                }}
+              >
+                <GlassPanel className="dash__panel dash__activity" interactive>
+                  <div className="dash__panel-head">
+                    <h4>Audit trail</h4>
+                  </div>
+                  <ul className="dash__activity-list mono">
+                    {auditEvents.length === 0 && <li className="dash__muted">No audit events loaded</li>}
+                    {auditEvents.slice(0, 8).map((e) => (
+                      <li key={e.id}>
+                        {formatTime(e.occurredAt)} {e.actorName ?? "system"} · {e.action} · {e.entityType}
+                      </li>
+                    ))}
+                  </ul>
+                </GlassPanel>
+              </div>
             </div>
           </>
-        )}
-
-        {(module === "consents" || module === "regulatory") && source !== "live" && (
-          <p className="dash__banner">Sign in to use operational {module} modules.</p>
         )}
       </div>
     </div>

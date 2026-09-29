@@ -12,10 +12,20 @@ dist
 dist-ssr
 *.local
 
+# Secrets / env
+.env
+server/.env
+tmp_video_check
+
 # Generated / local assets
 stitch-assets
 .playwright-mcp
+/test-results/
+/playwright-report/
+/blob-report/
 vedraya-*.png
+frames/
+Product_morph_and_mechanical_unfold_*.mp4
 
 # Editor directories and files
 .vscode/*

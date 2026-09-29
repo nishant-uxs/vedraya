@@ -1,7 +1,13 @@
 import { Router } from "express";
 import { and, eq, lt, ne, sql } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { adverseEvents, studyMilestones, studies } from "../../db/schema.js";
+import {
+  adverseEvents,
+  consents,
+  regulatorySubmissions,
+  studyMilestones,
+  studies,
+} from "../../db/schema.js";
 import { authenticate, requirePermission } from "../../middleware/auth.js";
 
 export const alertsRouter = Router();
@@ -19,20 +25,13 @@ alertsRouter.get("/", authenticate, requirePermission("study:view"), async (_req
         status: studyMilestones.status,
       })
       .from(studyMilestones)
-      .where(
-        and(
-          ne(studyMilestones.status, "completed"),
-          lt(studyMilestones.dueAt, now),
-        ),
-      );
+      .where(and(ne(studyMilestones.status, "completed"), lt(studyMilestones.dueAt, now)));
 
     const highRisk = await db
       .select({
         id: studies.id,
         code: studies.code,
         riskScore: studies.riskScore,
-        enrollmentCurrent: studies.enrollmentCurrent,
-        enrollmentTarget: studies.enrollmentTarget,
       })
       .from(studies)
       .where(and(sql`${studies.riskScore} >= 60`, ne(studies.status, "archived")));
@@ -46,6 +45,43 @@ alertsRouter.get("/", authenticate, requirePermission("study:view"), async (_req
       })
       .from(adverseEvents)
       .where(and(eq(adverseEvents.isSerious, true), ne(adverseEvents.status, "closed")));
+
+    const pendingConsent = await db
+      .select({
+        id: consents.id,
+        studyId: consents.studyId,
+        status: consents.status,
+      })
+      .from(consents)
+      .where(eq(consents.status, "pending"));
+
+    const overdueReg = await db
+      .select({
+        id: regulatorySubmissions.id,
+        studyId: regulatorySubmissions.studyId,
+        kind: regulatorySubmissions.kind,
+        referenceNumber: regulatorySubmissions.referenceNumber,
+        dueAt: regulatorySubmissions.dueAt,
+        status: regulatorySubmissions.status,
+      })
+      .from(regulatorySubmissions)
+      .where(
+        and(
+          lt(regulatorySubmissions.dueAt, now),
+          sql`${regulatorySubmissions.status} not in ('approved','registered','rejected','expired')`,
+        ),
+      );
+
+    const pendingEthics = await db
+      .select({
+        id: regulatorySubmissions.id,
+        studyId: regulatorySubmissions.studyId,
+        kind: regulatorySubmissions.kind,
+        status: regulatorySubmissions.status,
+        referenceNumber: regulatorySubmissions.referenceNumber,
+      })
+      .from(regulatorySubmissions)
+      .where(sql`${regulatorySubmissions.status} in ('submitted','under_review')`);
 
     const alerts = [
       ...delayed.map((m) => ({
@@ -68,6 +104,27 @@ alertsRouter.get("/", authenticate, requirePermission("study:view"), async (_req
         message: `${a.caseCode} — open serious AE (${a.status})`,
         entityId: a.id,
         studyId: a.studyId,
+      })),
+      ...pendingConsent.map((c) => ({
+        level: "warn" as const,
+        type: "consent_pending",
+        message: `Pending consent record`,
+        entityId: c.id,
+        studyId: c.studyId,
+      })),
+      ...overdueReg.map((r) => ({
+        level: "crit" as const,
+        type: "regulatory_overdue",
+        message: `Overdue ${r.kind} submission${r.referenceNumber ? ` (${r.referenceNumber})` : ""}`,
+        entityId: r.id,
+        studyId: r.studyId,
+      })),
+      ...pendingEthics.map((r) => ({
+        level: "warn" as const,
+        type: "ethics_pending",
+        message: `Pending ${r.kind} decision (${r.status})`,
+        entityId: r.id,
+        studyId: r.studyId,
       })),
     ];
 
